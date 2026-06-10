@@ -1,0 +1,23 @@
+    /homepage
+        -All courses
+        -Article
+         
+    /course delite page
+
+
+    /cart
+
+    /checkout
+        checkout success
+
+    /admin
+        /login
+
+        /course
+            -show all
+            -new
+            -edit
+            -delite
+
+        /orders
+            handle invoice
