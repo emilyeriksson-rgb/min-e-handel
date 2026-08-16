@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import pool from "./config/db.js";
 import courseRoutes from "./routes/courseRoutes.js";
+import courseSessionRoutes from "./routes/courseSessionRoutes.js";
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use("/api/courses", courseRoutes);
+app.use("/api/course-sessions", courseSessionRoutes);
 
 app.get("/", (req, res) => {
   res.json({
