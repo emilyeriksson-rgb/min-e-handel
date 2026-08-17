@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import pool from "./config/db.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import courseSessionRoutes from "./routes/courseSessionRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/api/courses", courseRoutes);
 app.use("/api/course-sessions", courseSessionRoutes);
+app.use("/api/orders", orderRoutes);
 
 app.get("/", (req, res) => {
   res.json({
