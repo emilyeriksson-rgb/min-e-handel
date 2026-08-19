@@ -1,13 +1,15 @@
+import { Link } from "react-router-dom";
+
 function Header() {
   return (
     <header>
-    <a href="/">Studie Centralen</a>
+    <Link to="/">Studie Centralen</Link>
     <p>I samarbete med Talivo</p>
 
 
       <nav aria-label="Huvudmeny">
-        <a href="/">Kurser</a>
-        <a href="/cart">Varukorg</a>
+        <Link to="/courses">Kurser</Link>
+        <Link to="/cart">Varukorg</Link>
       </nav>
     </header>
   );

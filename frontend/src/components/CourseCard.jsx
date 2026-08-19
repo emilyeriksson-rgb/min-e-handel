@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function CourseCard({ product }) {
     const currentPrice =
     product.is_on_sale && product.sale_price
@@ -10,6 +12,8 @@ function CourseCard({ product }) {
         });
 
     return (
+        <Link to={`/courses/${product.id}`} className="course-card-link" aria-label={`Läs mer om ${product.title}`}
+>
         <article className="course-card">
             {product.image_url && (
                 <img
@@ -23,7 +27,7 @@ function CourseCard({ product }) {
             <p className="study-info">{product.study_pace} {product.learning_format}</p>
             <strong>{formattedPrice}</strong>
         </article>
-    );
+    </Link>
+);
 }
-
 export default CourseCard;
