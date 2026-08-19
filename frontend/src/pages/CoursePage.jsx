@@ -5,12 +5,17 @@ import {
   fetchProductById,
 } from "../api/api.js";
 import Loader from "../components/Loader.jsx";
+import useCart from "../hooks/useCart.js";
+
 
 function CoursePage() {
   const { id } = useParams();
+  const { addToCart } = useCart();
 
   const [product, setProduct] = useState(null);
   const [sessions, setSessions] = useState([]);
+   const [selectedSessionId, setSelectedSessionId] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -36,6 +41,19 @@ function CoursePage() {
 
     loadCourseData();
   }, [id]);
+
+const handleAddToCart = () => {
+    const selectedSession = sessions.find(
+      (session) => String(session.id) === selectedSessionId
+    );
+if (!selectedSession) {
+      setMessage("Vänligen välj ett kurstillfälle.");
+      return;
+    }
+    addToCart(product, selectedSession);
+    setMessage("Kursen har lagts till i varukorgen.");
+  };
+
 
   if (loading) {
     return (
@@ -91,72 +109,82 @@ function CoursePage() {
       </section>
 
       <section className="course-sessions">
-        <h2> {sessions.length === 0 ? "Välj kurstillfälle" : "Det finns ett kurstillfälle tillgängligt"}</h2>
+  <h2>Välj kurstillfälle</h2>
 
-        {sessions.length === 0 ? (
-          <p>Det finns inga tillgängliga kurstillfällen.</p>
-        ) : (
-          sessions.map((session) => (
-            <article key={session.id}>
-              {session.is_self_paced ? (
-                <>
-                  <h3>Online i egen takt</h3>
-                  <p>Starta när du vill.</p>
-                </>
-              ) : (
-                <>
-                  <h3>
-                    {session.location_type === "online"
-                      ? "Online"
-                      : session.city || "På plats"}
-                  </h3>
+  {sessions.length === 0 ? (
+    <p>Det finns inga tillgängliga kurstillfällen.</p>
+  ) : (
+    sessions.map((session) => {
+      const isFullyBooked = session.available_seats === 0;
 
-                  <p>
-                    Utbildningen pågår{" "}
-                    {new Date(session.start_date).toLocaleDateString(
-                      "sv-SE"
-                    )}
-                 {" "} - {" "}
-                    {new Date(session.end_date).toLocaleDateString(
-                      "sv-SE"
-                    )}
-                  </p>
-                </>
-              )}
+      return (
+        <article key={session.id}>
+          <input
+            type="radio"
+            id={`session-${session.id}`}
+            name="course-session"
+            value={session.id}
+            checked={
+              selectedSessionId === String(session.id)
+            }
+            disabled={isFullyBooked}
+            onChange={(event) => {
+              setSelectedSessionId(event.target.value);
+              setMessage("");
+            }}
+          />
 
-              {session.duration && (
-                <p>Längd: {session.duration}</p>
-              )}
+          <label htmlFor={`session-${session.id}`}>
+            Välj detta kurstillfälle
+          </label>
 
-              {session.available_seats !== null && (
-                <p>Lediga platser: {session.available_seats}</p>
-              )}
-            </article>
-          ))
-        )}
-      </section>
+          {session.is_self_paced ? (
+            <>
+              <h3>Online i egen takt</h3>
+              <p>Starta när du vill.</p>
+            </>
+          ) : (
+            <>
+              <h3>
+                {session.location_type === "online"
+                  ? "Online"
+                  : session.city || "På plats"}
+              </h3>
 
-      <section className="group-booking-info">
-        <h2>Gruppbokning</h2>
+              <p>
+  Datum:{" "}
+  {new Date(session.start_date).toLocaleDateString("sv-SE")}
+</p>
 
-        <p>
-          För gruppbokning, kontakta oss på{" "}
-          <a href="mailto:info@skolan.se">
-            info@skolan.se
-          </a>
-        </p>
-      </section>
+{session.end_date && (
+  <p>
+    Slutdatum:{" "}
+    {new Date(session.end_date).toLocaleDateString("sv-SE")}
+  </p>
+)}
+            </>
+          )}
 
-      <section className="questions-and-answers">
-        <h2>Frågor och svar</h2>
+          {session.duration && (
+            <p>Längd: {session.duration}</p>
+          )}
 
-        <p>
-          Har du frågor om kursen? Kontakta oss så hjälper våra
-          handledare dig.
-        </p>
-      </section>
+          {isFullyBooked ? (
+            <p>Fullbokad</p>
+          ) : (
+            session.available_seats !== null && (
+              <p>
+                Lediga platser: {session.available_seats}
+              </p>
+            )
+          )}
+        </article>
+      );
+    })
+  )}
+</section>
+
     </main>
-  );
+    );
 }
-
 export default CoursePage;
