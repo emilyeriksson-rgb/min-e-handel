@@ -3,6 +3,7 @@ import Header from "./components/Header.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import CoursePage from "./pages/CoursePage.jsx";
 import CartPage from "./pages/CartPage.jsx";
+import CheckoutPage from "./pages/CheckoutPage.jsx";
 
 function App() {
   return (
@@ -14,7 +15,7 @@ function App() {
         <Route path="/courses" element={<HomePage />} />
         <Route path="/courses/:id" element={<CoursePage />} />
         <Route path="/cart" element={<CartPage />} />
-
+        <Route path ="/checkout" element={<CheckoutPage />} />
       </Routes>
     </>
   );
