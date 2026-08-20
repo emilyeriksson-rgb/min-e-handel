@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE admins (
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
@@ -41,16 +41,41 @@ CREATE TABLE course_sessions (
     location_type VARCHAR(50) NOT NULL,
     location_id INTEGER REFERENCES locations(id) ON DELETE SET NULL,
     duration VARCHAR(100),
-    is_self_paced BOOLEAN DEFAULT false
+    is_self_paced BOOLEAN DEFAULT false,
+    price NUMERIC(10, 2) NOT NULL,
+    sale_price NUMERIC(10, 2),
+    is_on_sale BOOLEAN DEFAULT false
+);
+
+CREATE TABLE billing_recipients (
+    id SERIAL PRIMARY KEY,
+
+    email VARCHAR(255) UNIQUE NOT NULL,
+
+    name VARCHAR(255),
+    company_name VARCHAR(255),
+    organization_number VARCHAR(50),
+
+    address VARCHAR(255),
+    postal_code VARCHAR(20),
+    city VARCHAR(100),
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT billing_recipients_email_not_empty
+        CHECK (TRIM(email) <> '')
 );
 
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    customer_email VARCHAR(255) NOT NULL,
-    material_email VARCHAR(255) NOT NULL,
+
+    billing_recipient_id INTEGER NOT NULL
+        REFERENCES billing_recipients(id)
+        ON DELETE RESTRICT,
+
     total_amount NUMERIC(10, 2) NOT NULL,
     payment_status VARCHAR(50) DEFAULT 'unpaid',
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -61,6 +86,29 @@ CREATE TABLE order_items (
     course_title VARCHAR(255) NOT NULL,
     price_at_purchase NUMERIC(10, 2) NOT NULL,
     quantity INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE participants (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT participants_email_not_empty
+        CHECK (TRIM(email) <> '')
+);
+
+CREATE TABLE enrollments (
+    id SERIAL PRIMARY KEY,
+    order_item_id INTEGER NOT NULL
+        REFERENCES order_items(id)
+        ON DELETE CASCADE,
+    participant_id INTEGER NOT NULL
+        REFERENCES participants(id)
+        ON DELETE RESTRICT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT enrollments_unique_participant
+        UNIQUE (order_item_id, participant_id)
 );
 
 CREATE TABLE payments (
