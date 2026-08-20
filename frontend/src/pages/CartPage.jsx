@@ -35,13 +35,7 @@ function CartPage() {
       <ul>
         {cartItems.map((item) => (
           <li key={item.courseSessionId}>
-            {item.imageUrl && (
-              <img
-                src={item.imageUrl}
-                alt={item.title}
-              />
-            )}
-
+           
             <h2>{item.title}</h2>
 
             {item.session.is_self_paced ? (
@@ -77,10 +71,10 @@ function CartPage() {
               }
             />
 
-            <p>
+          {/*   <p>
               Delsumma:{" "}
               {formatPrice(item.price * item.quantity)}
-            </p>
+            </p> */}
 
             <button
               type="button"
@@ -90,6 +84,7 @@ function CartPage() {
             >
               Ta bort
             </button>
+
           </li>
         ))}
       </ul>
