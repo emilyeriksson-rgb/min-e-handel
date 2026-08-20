@@ -15,6 +15,7 @@ CREATE TABLE courses (
     price NUMERIC(10, 2) NOT NULL,
     sale_price NUMERIC(10, 2),
     is_on_sale BOOLEAN DEFAULT false,
+    short_description VARCHAR(300),
     description TEXT,
     image_url TEXT,
     category VARCHAR(100),

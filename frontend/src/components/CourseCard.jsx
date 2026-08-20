@@ -23,8 +23,9 @@ function CourseCard({ product }) {
             )}
             <p className="category">{product.category}</p>
             <h2>{product.title}</h2>
-            <p className="description">{product.description}</p>
-            <p className="study-info">{product.study_pace} {product.learning_format}</p>
+<p className="description">
+  {product.short_description || product.description}
+</p>            <p className="study-info">{product.study_pace} {product.learning_format}</p>
             <strong>{formattedPrice}</strong>
         </article>
     </Link>

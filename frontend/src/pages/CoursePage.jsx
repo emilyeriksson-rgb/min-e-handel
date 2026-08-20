@@ -81,6 +81,9 @@ if (!selectedSession) {
     currency: "SEK",
   });
 
+const firstSession = sessions[0];
+
+
   return (
     <main>
       <section className="course-information">
@@ -92,9 +95,10 @@ if (!selectedSession) {
         )}
 
         <h1>{product.title}</h1>
+        <strong> {product.short_description}</strong>
         <p>{product.description}</p>
 
-        <dl>
+        <dl className="course-details">
           <dt>Kategori</dt>
           <dd>{product.category}</dd>
 
@@ -103,6 +107,20 @@ if (!selectedSession) {
 
           <dt>Studieform</dt>
           <dd>{product.learning_format}</dd>
+    {firstSession?.city && (
+      <>
+        <dt>Ort</dt>
+        <dd>{firstSession.city}</dd>
+      </>
+    )}
+
+    {firstSession?.duration && (
+      <>
+        <dt>Utbildningens längd</dt>
+        <dd>{firstSession.duration}</dd>
+      </>
+    )}
+
         </dl>
 
         <strong>{formattedPrice}</strong>
@@ -114,74 +132,66 @@ if (!selectedSession) {
   {sessions.length === 0 ? (
     <p>Det finns inga tillgängliga kurstillfällen.</p>
   ) : (
-    sessions.map((session) => {
-      const isFullyBooked = session.available_seats === 0;
+ 
+<>
+  <label htmlFor="course-session">
+    Tillgängliga datum
+  </label>
+
+  <select
+    id="course-session"
+    value={selectedSessionId}
+    onChange={(event) => {
+      setSelectedSessionId(event.target.value);
+      setMessage("");
+    }}
+  >
+    <option value="">Välj ett datum</option>
+
+    {sessions.map((session) => {
+      const isFullyBooked =
+        session.available_seats === 0;
+
+      const dateText = session.is_self_paced
+        ? "Starta när du vill"
+        : new Date(
+            session.start_date
+          ).toLocaleDateString("sv-SE", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          });
 
       return (
-        <article key={session.id}>
-          <input
-            type="radio"
-            id={`session-${session.id}`}
-            name="course-session"
-            value={session.id}
-            checked={
-              selectedSessionId === String(session.id)
-            }
-            disabled={isFullyBooked}
-            onChange={(event) => {
-              setSelectedSessionId(event.target.value);
-              setMessage("");
-            }}
-          />
+        <option
+          key={session.id}
+          value={session.id}
+          disabled={isFullyBooked}
+        >
+          {dateText}
+          {isFullyBooked ? " – Fullbokad" : ""}
+        </option>
+      );
+    })}
+  </select>
+</>
 
-          <label htmlFor={`session-${session.id}`}>
-            Välj detta kurstillfälle
-          </label>
+  )}
+<button
+  type="button"
+  onClick={handleAddToCart}
+  disabled={!selectedSessionId}
+>
+  Lägg till i varukorgen
+</button>
 
-          {session.is_self_paced ? (
-            <>
-              <h3>Online i egen takt</h3>
-              <p>Starta när du vill.</p>
-            </>
-          ) : (
-            <>
-              <h3>
-                {session.location_type === "online"
-                  ? "Online"
-                  : session.city || "På plats"}
-              </h3>
-
-              <p>
-  Datum:{" "}
-  {new Date(session.start_date).toLocaleDateString("sv-SE")}
-</p>
-
-{session.end_date && (
-  <p>
-    Slutdatum:{" "}
-    {new Date(session.end_date).toLocaleDateString("sv-SE")}
+{message && (
+  <p role="status">
+    {message}
   </p>
 )}
-            </>
-          )}
 
-          {session.duration && (
-            <p>Längd: {session.duration}</p>
-          )}
-
-          {isFullyBooked ? (
-            <p>Fullbokad</p>
-          ) : (
-            session.available_seats !== null && (
-              <p>
-                Lediga platser: {session.available_seats}
-              </p>
-            )
-          )}
-        </article>
-      );
-    })
-  )}
 </section>
 
     </main>
