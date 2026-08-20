@@ -47,6 +47,7 @@ CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     customer_email VARCHAR(255) NOT NULL,
+    material_email VARCHAR(255) NOT NULL,
     total_amount NUMERIC(10, 2) NOT NULL,
     payment_status VARCHAR(50) DEFAULT 'unpaid',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
