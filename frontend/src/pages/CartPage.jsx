@@ -6,7 +6,6 @@ function CartPage() {
     cartItems,
     removeFromCart,
     updateQuantity,
-    clearCart,
     cartTotal,
   } = useCart();
 
