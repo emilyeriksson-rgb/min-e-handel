@@ -137,3 +137,29 @@ export const createLocation = async (location) => {
 
   return response.json();
 };
+
+export const createCourseSession = async (
+  courseId,
+  sessionData
+) => {
+  const response = await fetch(
+    `${API_URL}/courses/${courseId}/sessions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(sessionData),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Kunde inte skapa kurstillfället."
+    );
+  }
+
+  return data;
+};
