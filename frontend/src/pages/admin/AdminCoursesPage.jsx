@@ -11,8 +11,15 @@ const emptyCourseForm = {
   title: "",
   slug: "",
   price: "",
+  category: "",
+  study_pace: "",
+  short_description: "",
+  description: "",
+  image_url: "",
+  is_published: false,
   learning_format: "",
 };
+
 
 function AdminCoursesPage() {
   const [courses, setCourses] = useState([]);
@@ -59,17 +66,23 @@ const handleSelectCourse = (course) => {
     slug: course.slug || "",
     price: course.price || "",
     learning_format: course.learning_format || "",
+     category: course.category || "",
+  study_pace: course.study_pace || "",
+  short_description: course.short_description || "",
+  description: course.description || "",
+  image_url: course.image_url || "",
+  is_published: Boolean(course.is_published),
   });
 
   setMessage("");
 };
 
 const handleCourseChange = (event) => {
-  const { name, value } = event.target;
+  const { name, value, type, checked } = event.target;
 
   setCourseForm((currentForm) => ({
     ...currentForm,
-    [name]: value,
+    [name]: type === "checkbox" ? checked : value,
   }));
 };
 
@@ -218,6 +231,62 @@ const handleCourseSubmit = async (event) => {
     <option value="onsite">På plats</option>
     <option value="online">Online</option>
   </select>
+
+  <label htmlFor="category">Kategori</label>
+<input
+  id="category"
+  name="category"
+  value={courseForm.category}
+  onChange={handleCourseChange}
+/>
+
+<label htmlFor="study_pace">Studietakt</label>
+<input
+  id="study_pace"
+  name="study_pace"
+  value={courseForm.study_pace}
+  onChange={handleCourseChange}
+  placeholder="Exempelvis heltid eller egen takt"
+/>
+
+<label htmlFor="short_description">
+  Kort beskrivning
+</label>
+<textarea
+  id="short_description"
+  name="short_description"
+  value={courseForm.short_description}
+  onChange={handleCourseChange}
+/>
+
+<label htmlFor="description">
+  Fullständig beskrivning
+</label>
+<textarea
+  id="description"
+  name="description"
+  value={courseForm.description}
+  onChange={handleCourseChange}
+/>
+
+<label htmlFor="image_url">Bildadress</label>
+<input
+  id="image_url"
+  name="image_url"
+  type="url"
+  value={courseForm.image_url}
+  onChange={handleCourseChange}
+/>
+
+<label>
+  <input
+    name="is_published"
+    type="checkbox"
+    checked={courseForm.is_published}
+    onChange={handleCourseChange}
+  />
+  Publicerad i webbutiken
+</label>
 
   <button type="submit" disabled={isSaving}>
     {isSaving ? "Sparar..." : "Spara utbildning"}
