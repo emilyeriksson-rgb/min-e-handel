@@ -60,3 +60,49 @@ export const createOrder = async (orderData) => {
 
   return data;
 };
+
+export const createCourse = async (courseData) => {
+  const response = await fetch(`${API_URL}/courses`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(courseData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Kunde inte skapa utbildningen."
+    );
+  }
+
+  return data;
+};
+
+export const updateCourse = async (
+  courseId,
+  courseData
+) => {
+  const response = await fetch(
+    `${API_URL}/courses/${courseId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(courseData),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Kunde inte uppdatera utbildningen."
+    );
+  }
+
+  return data;
+};

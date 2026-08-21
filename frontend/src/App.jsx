@@ -9,6 +9,8 @@ import CartPage from "./pages/CartPage.jsx";
 import CheckoutPage from "./pages/CheckoutPage.jsx";
 
 import AdminHomePage from "./pages/admin/AdminHomePage.jsx";
+import AdminCoursesPage from "./pages/admin/AdminCoursesPage.jsx";
+import AdminCourseFormPage from "./pages/admin/AdminCourseFormPage.jsx";
 
 function App() {
   return (
@@ -47,6 +49,18 @@ function App() {
         <Route
           index
           element={<AdminHomePage />}
+        />
+        <Route
+          path="courses"
+          element={<AdminCoursesPage />}
+        />
+        <Route
+          path="courses/new"
+          element={<AdminCourseFormPage />}
+        />
+        <Route
+          path="courses/:id/edit"
+          element={<AdminCourseFormPage />}
         />
       </Route>
     </Routes>
