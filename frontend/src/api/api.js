@@ -163,3 +163,25 @@ export const createCourseSession = async (
 
   return data;
 };
+
+export const fetchOrders = async () => {
+  const response = await fetch(`${API_URL}/orders`);
+
+  if (!response.ok) {
+    throw new Error("Kunde inte hämta ordrar.");
+  }
+
+  return response.json();
+};
+
+export const fetchOrderById = async (orderId) => {
+  const response = await fetch(
+    `${API_URL}/orders/${orderId}`
+  );
+
+  if (!response.ok) {
+    throw new Error("Kunde inte hämta ordern.");
+  }
+
+  return response.json();
+};
