@@ -1,12 +1,14 @@
 import express from "express";
 
 import {
-    updateCourseSession,
-    deleteCourseSession
+  getCourseSessionById,
+  updateCourseSession,
+  deleteCourseSession,
 } from "../controllers/courseSessionController.js";
 
 const router = express.Router();
 
+router.get("/:id", getCourseSessionById);
 router.put("/:id", updateCourseSession);
 router.delete("/:id", deleteCourseSession);
 
