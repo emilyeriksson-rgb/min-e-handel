@@ -152,16 +152,22 @@ const firstSession = sessions[0];
       const isFullyBooked =
         session.available_seats === 0;
 
-      const dateText = session.is_self_paced
-        ? "Starta när du vill"
-        : new Date(
-            session.start_date
-          ).toLocaleDateString("sv-SE", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          });
+     let dateText;
+
+if (session.is_self_paced) {
+  dateText = "Online i egen takt – starta när du vill";
+} else if (!session.start_date) {
+  dateText = "Datum enligt överenskommelse";
+} else {
+  dateText = new Date(
+    session.start_date
+  ).toLocaleDateString("sv-SE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
 
       return (
         <option

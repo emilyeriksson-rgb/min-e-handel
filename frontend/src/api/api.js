@@ -106,3 +106,34 @@ export const updateCourse = async (
 
   return data;
 };
+
+
+export const fetchLocations = async () => {
+  const response = await fetch(`${API_URL}/locations`);
+
+  if (!response.ok) {
+    throw new Error("Kunde inte hämta platser.");
+  }
+
+  return response.json();
+};
+
+export const createLocation = async (location) => {
+  const response = await fetch(`${API_URL}/locations`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(location),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+
+    throw new Error(
+      error.message || "Kunde inte skapa plats."
+    );
+  }
+
+  return response.json();
+};
