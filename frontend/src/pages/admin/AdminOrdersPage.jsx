@@ -1,14 +1,23 @@
 import { useEffect, useState } from "react";
 import Loader from "../../components/Loader.jsx";
-import { fetchOrderById, fetchOrders,} from "../../api/api.js";
+import { fetchOrderById, fetchOrders, updateOrderStatus,} from "../../api/api.js";
+
+const orderStatusLabels = {
+  new: "New",
+  processing: "Processing",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
 
 function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
-const [isOrderLoading, setIsOrderLoading] =
-  useState(false);
+  const [isStatusSaving, setIsStatusSaving] = useState(false);
+const [isOrderLoading, setIsOrderLoading] =  useState(false);
+const [selectedStatus, setSelectedStatus] = useState("");
+const [statusMessage, setStatusMessage] = useState("");
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -41,6 +50,8 @@ const [isOrderLoading, setIsOrderLoading] =
 
     const orderData = await fetchOrderById(orderId);
     setSelectedOrder(orderData);
+    setSelectedStatus(orderData.order_status);
+    setStatusMessage("");
   } catch (error) {
     setError(error.message);
   } finally {
@@ -49,30 +60,72 @@ const [isOrderLoading, setIsOrderLoading] =
 };
 
   if (isLoading) {
-    return <Loader message="Laddar ordrar..." />;
+    return <Loader message="Loading..." />;
   }
 
   if (error) {
     return <p role="alert">{error}</p>;
   }
 
+const handleSaveOrderStatus = async () => {
+  try {
+    setIsStatusSaving(true);
+    setError("");
+    setStatusMessage("");
+
+    const updatedOrder = await updateOrderStatus(
+      selectedOrder.id,
+      selectedStatus
+    );
+
+    setSelectedOrder((currentOrder) => ({
+      ...currentOrder,
+      order_status: updatedOrder.order_status,
+    }));
+
+    setOrders((currentOrders) =>
+      currentOrders.map((order) =>
+        order.id === updatedOrder.id
+          ? {
+              ...order,
+              order_status: updatedOrder.order_status,
+            }
+          : order
+      )
+    );
+
+    setStatusMessage("Orderstatusen har sparats.");
+  } catch (error) {
+    setError(error.message);
+  } finally {
+    setIsStatusSaving(false);
+  }
+};
+
+const handleCloseOrder = () => {
+  setSelectedOrder(null);
+  setSelectedStatus("");
+  setStatusMessage("");
+};
+
   return (
     <section>
-      <h1>Ordrar</h1>
+      <h1>Orders</h1>
 
       {orders.length === 0 ? (
-        <p>Det finns inga ordrar.</p>
+        <p>There are no orders.</p>
       ) : (
       <table>
   <thead>
     <tr>
       <th>Order</th>
-      <th>Fakturamottagare</th>
-      <th>E-post</th>
-      <th>Datum</th>
-      <th>Status</th>
-      <th>Summa</th>
-      <th>Visa</th>
+      <th>Invoice Recipient</th>
+      <th>Email</th>
+      <th>Date</th>
+      <th>Total</th>
+      <th>Invoice Status</th>
+      <th>Order Status</th>
+      <th>View</th>
     </tr>
   </thead>
 
@@ -84,20 +137,27 @@ const [isOrderLoading, setIsOrderLoading] =
         <td>
           {order.company_name ||
             order.invoice_name ||
-            "Saknas"}
+            "Missing Name"}
         </td>
 
         <td>{order.invoice_email}</td>
         <td>{formatDate(order.created_at)}</td>
-        <td>{order.payment_status}</td>
+
         <td>{formatPrice(order.total_amount)}</td>
+        <td>{order.payment_status}</td>
+        
+        <td>{orderStatusLabels[order.order_status] ||
+            order.order_status}</td>
+        
+
+
 
         <td>
           <button
             type="button"
             onClick={() => handleSelectOrder(order.id)}
           >
-            Visa order
+            View Order
           </button>
         </td>
       </tr>
@@ -107,17 +167,47 @@ const [isOrderLoading, setIsOrderLoading] =
       )}
 
       {isOrderLoading && (
-  <Loader message="Laddar orderdetaljer..." />
+  <Loader message="Loading order details..." />
 )}
 
 {selectedOrder && !isOrderLoading && (
   <section>
     <h2>Order #{selectedOrder.id}</h2>
+    <label htmlFor="order-status">Order Status</label>
 
-    <h3>Fakturauppgifter</h3>
+<select
+  id="order-status"
+  value={selectedStatus}
+  onChange={(event) =>
+    setSelectedStatus(event.target.value)
+  }
+  disabled={isStatusSaving}
+>
+  <option value="new">New</option>
+  <option value="processing">Processing</option>
+  <option value="completed">Completed</option>
+  <option value="cancelled">Cancelled</option>
+
+  
+</select>
+
+<button
+  type="button"
+  onClick={handleSaveOrderStatus}
+  disabled={
+    isStatusSaving ||
+    selectedStatus === selectedOrder.order_status
+  }
+>
+  {isStatusSaving ? "Save..." : "Save status"}
+</button>
+
+{isStatusSaving && <p>Save status...</p>}
+
+    <h3>Recipient Information</h3>
 
     <p>
-      Namn:{" "}
+      Name:{" "}
       {selectedOrder.invoice_name ||
         selectedOrder.company_name}
     </p>
@@ -126,7 +216,7 @@ const [isOrderLoading, setIsOrderLoading] =
 
     {selectedOrder.organization_number && (
       <p>
-        Organisationsnummer:{" "}
+        Organization Number:{" "}
         {selectedOrder.organization_number}
       </p>
     )}
@@ -136,39 +226,39 @@ const [isOrderLoading, setIsOrderLoading] =
       {selectedOrder.postal_code} {selectedOrder.city}
     </p>
 
-    <h3>Beställda utbildningar</h3>
+    <h3>Items</h3>
 
     {selectedOrder.items.map((item) => (
       <article key={item.id}>
         <h4>{item.course_title}</h4>
 
         <p>
-          Pris: {formatPrice(item.price_at_purchase)}
+          Price: {formatPrice(item.price_at_purchase)}
         </p>
 
-        <p>Antal deltagare: {item.quantity}</p>
+        <p>Quantity: {item.quantity}</p>
 
         {item.start_date ? (
           <p>
-            Kursdatum: {formatDate(item.start_date)}
+            Course Date: {formatDate(item.start_date)}
           </p>
         ) : (
-          <p>Datum enligt överenskommelse</p>
+          <p>Date according to agreement</p>
         )}
 
         {item.city && (
           <p>
-            Plats: {item.city}
+            Location: {item.city}
             {item.address && `, ${item.address}`}
           </p>
         )}
 
-        <h5>Deltagare</h5>
+        <h5>Participants</h5>
 
         {item.participants.map((participant) => (
           <p key={participant.id}>
-            {participant.first_name}{" "}
-            {participant.last_name} –{" "}
+            {participant.first_name}  {" "}
+            {participant.last_name} {" "}
             {participant.email}
           </p>
         ))}
@@ -176,15 +266,32 @@ const [isOrderLoading, setIsOrderLoading] =
     ))}
 
     <p>
-      Totalt:{" "}
+      Total:{" "}
       <strong>
         {formatPrice(selectedOrder.total_amount)}
       </strong>
     </p>
+
+
+
+<button
+  type="button"
+  onClick={handleCloseOrder}
+  disabled={isStatusSaving}
+>
+  Close Order
+</button>
+
+{statusMessage && (
+  <p role="status">{statusMessage}</p>
+)}
+
   </section>
 )}
     </section>
   );
 }
+
+
 
 export default AdminOrdersPage;

@@ -24,6 +24,7 @@ export const getAllOrders = async (req, res) => {
         orders.id,
         orders.total_amount,
         orders.payment_status,
+        orders.order_status,
         orders.created_at,
 
         billing_recipients.id AS billing_recipient_id,
@@ -64,6 +65,7 @@ export const getOrderById = async (req, res) => {
           orders.id,
           orders.total_amount,
           orders.payment_status,
+          orders.order_status,
           orders.created_at,
 
           billing_recipients.id
@@ -172,6 +174,48 @@ export const getOrderById = async (req, res) => {
   }
 };
 
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { order_status: orderStatus } = req.body;
+
+    const allowedStatuses = [
+      "new",
+      "processing",
+      "completed",
+      "cancelled",
+    ];
+
+    if (!allowedStatuses.includes(orderStatus)) {
+      return res.status(400).json({
+        message: "Ogiltig orderstatus.",
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE orders
+       SET order_status = $1
+       WHERE id = $2
+       RETURNING *`,
+      [orderStatus, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Ordern hittades inte.",
+      });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Kunde inte uppdatera orderstatus:", error);
+
+    res.status(500).json({
+      message: "Kunde inte uppdatera orderstatus.",
+    });
+  }
+};
+
 export const createOrder = async (req, res) => {
   let client;
   let transactionStarted = false;
@@ -224,39 +268,53 @@ export const createOrder = async (req, res) => {
         );
       }
 
-      const uniqueParticipants = new Map();
+     const participantEmails = new Set();
 
-      item.participants.forEach((participant) => {
-        if (!participant.email) {
-          throw createRequestError(
-            "Deltagarens email måste anges."
-          );
-        }
+const participants = item.participants.map(
+  (participant) => {
+    if (!participant.email) {
+      throw createRequestError(
+        "Deltagarens email måste anges."
+      );
+    }
 
-        const participantEmail = normalizeEmail(
-          participant.email
-        );
+    const participantEmail = normalizeEmail(
+      participant.email
+    );
 
-        if (!isValidEmail(participantEmail)) {
-          throw createRequestError(
-            `Ogiltig email för deltagare: ${participant.email}`
-          );
-        }
+    if (!isValidEmail(participantEmail)) {
+      throw createRequestError(
+        `Ogiltig email för deltagare: ${participant.email}`
+      );
+    }
 
-        uniqueParticipants.set(participantEmail, {
-          email: participantEmail,
-          firstName: normalizeOptionalText(
-            participant.first_name
-          ),
-          lastName: normalizeOptionalText(
-            participant.last_name
-          ),
-        });
-      });
+    if (participantEmails.has(participantEmail)) {
+      throw createRequestError(
+        "Varje deltagare på samma utbildning måste ha en unik e-postadress."
+      );
+    }
+
+    participantEmails.add(participantEmail);
+
+    return {
+      email: participantEmail,
+      firstName: normalizeOptionalText(
+        participant.first_name
+      ),
+      lastName: normalizeOptionalText(
+        participant.last_name
+      ),
+    };
+  }
+);
+
+return {
+  courseSessionId,
+  participants,
+};
 
       return {
-        courseSessionId,
-        participants: [...uniqueParticipants.values()],
+        courseSessionId
       };
     });
 

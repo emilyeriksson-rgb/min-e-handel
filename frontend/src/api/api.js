@@ -185,3 +185,31 @@ export const fetchOrderById = async (orderId) => {
 
   return response.json();
 };
+
+export const updateOrderStatus = async (
+  orderId,
+  orderStatus
+) => {
+  const response = await fetch(
+    `${API_URL}/orders/${orderId}/status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        order_status: orderStatus,
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Kunde inte uppdatera orderstatus."
+    );
+  }
+
+  return data;
+};

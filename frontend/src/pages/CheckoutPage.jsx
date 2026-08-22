@@ -109,6 +109,21 @@ function CheckoutPage() {
         })),
       }));
 
+      for (const item of items) {
+  const participantEmails = item.participants.map(
+    (participant) =>
+      participant.email.trim().toLowerCase()
+  );
+
+  const uniqueEmails = new Set(participantEmails);
+
+  if (uniqueEmails.size !== participantEmails.length) {
+    throw new Error(
+      "Varje deltagare på samma utbildning måste ha en unik e-postadress."
+    );
+  }
+}
+
       const result = await createOrder({
         billing_recipient: billingRecipient,
         items,
@@ -277,6 +292,10 @@ function CheckoutPage() {
 
         <section>
           <h2>Deltagare</h2>
+          <p>
+  Varje deltagare på samma utbildning måste ha en
+  unik e-postadress.
+</p>
 
           {cartItems.map((item) => (
             <fieldset key={item.courseSessionId}>

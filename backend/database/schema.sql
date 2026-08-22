@@ -76,6 +76,16 @@ CREATE TABLE orders (
     total_amount NUMERIC(10, 2) NOT NULL,
     payment_status VARCHAR(50) DEFAULT 'unpaid',
 
+    order_status VARCHAR(30) NOT NULL DEFAULT 'new'
+  CHECK (
+    order_status IN (
+      'new',
+      'processing',
+      'completed',
+      'cancelled'
+    )
+  ),
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
