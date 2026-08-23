@@ -213,3 +213,32 @@ export const updateOrderStatus = async (
 
   return data;
 };
+
+export const updateInvoiceStatus = async (
+  orderId,
+  invoiceStatus
+) => {
+  const response = await fetch(
+    `${API_URL}/orders/${orderId}/invoice-status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        invoice_status: invoiceStatus,
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+        "Kunde inte uppdatera fakturastatus."
+    );
+  }
+
+  return data;
+};

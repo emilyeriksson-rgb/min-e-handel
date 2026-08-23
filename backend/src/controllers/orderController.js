@@ -19,31 +19,39 @@ const createRequestError = (message, status = 400) => {
 
 export const getAllOrders = async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT
-        orders.id,
-        orders.total_amount,
-        orders.payment_status,
-        orders.order_status,
-        orders.created_at,
+   const result = await pool.query(`
+  SELECT
+    orders.id,
+    orders.total_amount,
+    orders.payment_status,
+    orders.order_status,
+    orders.created_at,
 
-        billing_recipients.id AS billing_recipient_id,
-        billing_recipients.email AS invoice_email,
-        billing_recipients.name AS invoice_name,
-        billing_recipients.company_name,
-        billing_recipients.organization_number,
-        billing_recipients.address,
-        billing_recipients.postal_code,
-        billing_recipients.city
+    billing_recipients.id AS billing_recipient_id,
+    billing_recipients.email AS invoice_email,
+    billing_recipients.name AS invoice_name,
+    billing_recipients.company_name,
+    billing_recipients.organization_number,
+    billing_recipients.address,
+    billing_recipients.postal_code,
+    billing_recipients.city,
 
-      FROM orders
+    payments.invoice_number,
+    payments.invoice_status,
+    payments.invoice_due_date,
+    payments.paid_at
 
-      JOIN billing_recipients
-        ON billing_recipients.id =
-           orders.billing_recipient_id
+  FROM orders
 
-      ORDER BY orders.created_at DESC
-    `);
+  JOIN billing_recipients
+    ON billing_recipients.id =
+       orders.billing_recipient_id
+
+  LEFT JOIN payments
+    ON payments.order_id = orders.id
+
+  ORDER BY orders.created_at DESC
+`);
 
     res.json(result.rows);
   } catch (error) {
@@ -81,13 +89,21 @@ export const getOrderById = async (req, res) => {
           billing_recipients.organization_number,
           billing_recipients.address,
           billing_recipients.postal_code,
-          billing_recipients.city
+          billing_recipients.city,
+
+          payments.invoice_number,
+payments.invoice_status,
+payments.invoice_due_date,
+payments.paid_at
 
         FROM orders
 
         JOIN billing_recipients
           ON billing_recipients.id =
              orders.billing_recipient_id
+
+             LEFT JOIN payments
+  ON payments.order_id = orders.id
 
         WHERE orders.id = $1
       `,
@@ -589,5 +605,79 @@ return {
     });
   } finally {
     client?.release();
+  }
+};
+
+export const updateInvoiceStatus = async (req, res) => {
+  const allowedStatuses = [
+    "unpaid",
+    "paid",
+    "overdue",
+    "refunded",
+  ];
+
+  const { id } = req.params;
+  const { invoice_status: invoiceStatus } = req.body;
+
+  if (!allowedStatuses.includes(invoiceStatus)) {
+    return res.status(400).json({
+      message: "Ogiltig fakturastatus.",
+    });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+ const paymentResult = await client.query(
+  `UPDATE payments
+   SET
+     invoice_status = $1::VARCHAR,
+     paid_at = CASE
+       WHEN $1::VARCHAR = 'paid'
+         THEN COALESCE(
+           paid_at,
+           CURRENT_TIMESTAMP
+         )
+       WHEN $1::VARCHAR = 'unpaid'
+         THEN NULL
+       ELSE paid_at
+     END
+   WHERE order_id = $2
+   RETURNING *`,
+  [invoiceStatus, id]
+);
+    if (paymentResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        message: "Fakturan hittades inte.",
+      });
+    }
+
+    await client.query(
+      `UPDATE orders
+       SET payment_status = $1
+       WHERE id = $2`,
+      [invoiceStatus, id]
+    );
+
+    await client.query("COMMIT");
+
+    res.json(paymentResult.rows[0]);
+  } catch (error) {
+    await client.query("ROLLBACK");
+
+    console.error(
+      "Kunde inte uppdatera fakturastatus:",
+      error
+    );
+
+    res.status(500).json({
+      message: "Kunde inte uppdatera fakturastatus.",
+    });
+  } finally {
+    client.release();
   }
 };

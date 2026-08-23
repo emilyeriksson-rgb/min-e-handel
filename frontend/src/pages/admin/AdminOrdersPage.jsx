@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Loader from "../../components/Loader.jsx";
-import { fetchOrderById, fetchOrders, updateOrderStatus,} from "../../api/api.js";
+import { fetchOrderById, fetchOrders, updateInvoiceStatus, updateOrderStatus,} from "../../api/api.js";
 
 const orderStatusLabels = {
   new: "New",
@@ -18,6 +18,9 @@ function AdminOrdersPage() {
 const [isOrderLoading, setIsOrderLoading] =  useState(false);
 const [selectedStatus, setSelectedStatus] = useState("");
 const [statusMessage, setStatusMessage] = useState("");
+const [selectedInvoiceStatus, setSelectedInvoiceStatus] = useState("");
+const [isInvoiceStatusSaving,  setIsInvoiceStatusSaving,] = useState(false);
+const [invoiceStatusMessage, setInvoiceStatusMessage] = useState("");
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -51,7 +54,10 @@ const [statusMessage, setStatusMessage] = useState("");
     const orderData = await fetchOrderById(orderId);
     setSelectedOrder(orderData);
     setSelectedStatus(orderData.order_status);
+    setSelectedInvoiceStatus( orderData.invoice_status || orderData.payment_status);
     setStatusMessage("");
+    setInvoiceStatusMessage("");
+    
   } catch (error) {
     setError(error.message);
   } finally {
@@ -66,6 +72,50 @@ const [statusMessage, setStatusMessage] = useState("");
   if (error) {
     return <p role="alert">{error}</p>;
   }
+
+const handleSaveInvoiceStatus = async () => {
+  try {
+    setIsInvoiceStatusSaving(true);
+    setError("");
+    setInvoiceStatusMessage("");
+
+    const orderId = selectedOrder.id;
+
+    const updatedPayment = await updateInvoiceStatus(
+      orderId,
+      selectedInvoiceStatus
+    );
+
+    setSelectedOrder((currentOrder) => ({
+      ...currentOrder,
+      invoice_status: updatedPayment.invoice_status,
+      payment_status: updatedPayment.invoice_status,
+      paid_at: updatedPayment.paid_at,
+    }));
+
+    setOrders((currentOrders) =>
+      currentOrders.map((order) =>
+        order.id === orderId
+          ? {
+              ...order,
+              invoice_status:
+                updatedPayment.invoice_status,
+              payment_status:
+                updatedPayment.invoice_status,
+            }
+          : order
+      )
+    );
+
+    setInvoiceStatusMessage(
+      "Invoice status has been saved."
+    );
+  } catch (error) {
+    setError(error.message);
+  } finally {
+    setIsInvoiceStatusSaving(false);
+  }
+};
 
 const handleSaveOrderStatus = async () => {
   try {
@@ -94,7 +144,7 @@ const handleSaveOrderStatus = async () => {
       )
     );
 
-    setStatusMessage("Orderstatusen har sparats.");
+    setStatusMessage("Order status has been saved.");
   } catch (error) {
     setError(error.message);
   } finally {
@@ -102,10 +152,14 @@ const handleSaveOrderStatus = async () => {
   }
 };
 
+
+
 const handleCloseOrder = () => {
   setSelectedOrder(null);
   setSelectedStatus("");
+  setSelectedInvoiceStatus("");
   setStatusMessage("");
+  setInvoiceStatusMessage("");
 };
 
   return (
@@ -181,7 +235,7 @@ const handleCloseOrder = () => {
   onChange={(event) =>
     setSelectedStatus(event.target.value)
   }
-  disabled={isStatusSaving}
+  disabled={isStatusSaving || isInvoiceStatusSaving}
 >
   <option value="new">New</option>
   <option value="processing">Processing</option>
@@ -190,6 +244,8 @@ const handleCloseOrder = () => {
 
   
 </select>
+
+
 
 <button
   type="button"
@@ -203,8 +259,49 @@ const handleCloseOrder = () => {
 </button>
 
 {isStatusSaving && <p>Save status...</p>}
+{statusMessage && (
+  <p role="status">{statusMessage}</p>
+)}
 
-    <h3>Recipient Information</h3>
+<h3>Invoice Status</h3>
+
+<label htmlFor="invoice-status">
+  Invoice Status
+</label>
+
+<select
+  id="invoice-status"
+  value={selectedInvoiceStatus}
+  onChange={(event) =>
+    setSelectedInvoiceStatus(event.target.value)
+  }
+  disabled={isInvoiceStatusSaving}
+>
+  <option value="unpaid">Unpaid</option>
+  <option value="paid">Paid</option>
+  <option value="overdue">Overdue</option>
+  <option value="refunded">Refunded</option>
+</select>
+
+<button
+  type="button"
+  onClick={handleSaveInvoiceStatus}
+  disabled={
+    isInvoiceStatusSaving ||
+    selectedInvoiceStatus ===
+      selectedOrder.invoice_status
+  }
+>
+  {isInvoiceStatusSaving
+    ? "Saving..."
+    : "Save Invoice Status"}
+</button>
+
+{invoiceStatusMessage && (
+  <p role="status">{invoiceStatusMessage}</p>
+)}
+
+<h3>Recipient Information</h3>
 
     <p>
       Name:{" "}
@@ -277,14 +374,10 @@ const handleCloseOrder = () => {
 <button
   type="button"
   onClick={handleCloseOrder}
-  disabled={isStatusSaving}
+  disabled={isStatusSaving || isInvoiceStatusSaving}
 >
   Close Order
 </button>
-
-{statusMessage && (
-  <p role="status">{statusMessage}</p>
-)}
 
   </section>
 )}
