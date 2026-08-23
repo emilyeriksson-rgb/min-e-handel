@@ -163,3 +163,82 @@ export const createCourseSession = async (
 
   return data;
 };
+
+export const fetchOrders = async () => {
+  const response = await fetch(`${API_URL}/orders`);
+
+  if (!response.ok) {
+    throw new Error("Kunde inte hämta ordrar.");
+  }
+
+  return response.json();
+};
+
+export const fetchOrderById = async (orderId) => {
+  const response = await fetch(
+    `${API_URL}/orders/${orderId}`
+  );
+
+  if (!response.ok) {
+    throw new Error("Kunde inte hämta ordern.");
+  }
+
+  return response.json();
+};
+
+export const updateOrderStatus = async (
+  orderId,
+  orderStatus
+) => {
+  const response = await fetch(
+    `${API_URL}/orders/${orderId}/status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        order_status: orderStatus,
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Kunde inte uppdatera orderstatus."
+    );
+  }
+
+  return data;
+};
+
+export const updateInvoiceStatus = async (
+  orderId,
+  invoiceStatus
+) => {
+  const response = await fetch(
+    `${API_URL}/orders/${orderId}/invoice-status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        invoice_status: invoiceStatus,
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+        "Kunde inte uppdatera fakturastatus."
+    );
+  }
+
+  return data;
+};

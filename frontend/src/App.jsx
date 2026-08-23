@@ -10,6 +10,7 @@ import CheckoutPage from "./pages/CheckoutPage.jsx";
 
 import AdminHomePage from "./pages/admin/AdminHomePage.jsx";
 import AdminCoursesPage from "./pages/admin/AdminCoursesPage.jsx";
+import AdminOrdersPage from "./pages/admin/AdminOrdersPage.jsx";
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
      <Route path="/admin" element={<AdminLayout />}>
   <Route index element={<AdminHomePage />} />
   <Route path="courses" element={<AdminCoursesPage />} />
+  <Route path="orders" element={<AdminOrdersPage />} />
 </Route>
     </Routes>
   );

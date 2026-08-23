@@ -19,30 +19,39 @@ const createRequestError = (message, status = 400) => {
 
 export const getAllOrders = async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT
-        orders.id,
-        orders.total_amount,
-        orders.payment_status,
-        orders.created_at,
+   const result = await pool.query(`
+  SELECT
+    orders.id,
+    orders.total_amount,
+    orders.payment_status,
+    orders.order_status,
+    orders.created_at,
 
-        billing_recipients.id AS billing_recipient_id,
-        billing_recipients.email AS invoice_email,
-        billing_recipients.name AS invoice_name,
-        billing_recipients.company_name,
-        billing_recipients.organization_number,
-        billing_recipients.address,
-        billing_recipients.postal_code,
-        billing_recipients.city
+    billing_recipients.id AS billing_recipient_id,
+    billing_recipients.email AS invoice_email,
+    billing_recipients.name AS invoice_name,
+    billing_recipients.company_name,
+    billing_recipients.organization_number,
+    billing_recipients.address,
+    billing_recipients.postal_code,
+    billing_recipients.city,
 
-      FROM orders
+    payments.invoice_number,
+    payments.invoice_status,
+    payments.invoice_due_date,
+    payments.paid_at
 
-      JOIN billing_recipients
-        ON billing_recipients.id =
-           orders.billing_recipient_id
+  FROM orders
 
-      ORDER BY orders.created_at DESC
-    `);
+  JOIN billing_recipients
+    ON billing_recipients.id =
+       orders.billing_recipient_id
+
+  LEFT JOIN payments
+    ON payments.order_id = orders.id
+
+  ORDER BY orders.created_at DESC
+`);
 
     res.json(result.rows);
   } catch (error) {
@@ -64,6 +73,7 @@ export const getOrderById = async (req, res) => {
           orders.id,
           orders.total_amount,
           orders.payment_status,
+          orders.order_status,
           orders.created_at,
 
           billing_recipients.id
@@ -79,13 +89,21 @@ export const getOrderById = async (req, res) => {
           billing_recipients.organization_number,
           billing_recipients.address,
           billing_recipients.postal_code,
-          billing_recipients.city
+          billing_recipients.city,
+
+          payments.invoice_number,
+payments.invoice_status,
+payments.invoice_due_date,
+payments.paid_at
 
         FROM orders
 
         JOIN billing_recipients
           ON billing_recipients.id =
              orders.billing_recipient_id
+
+             LEFT JOIN payments
+  ON payments.order_id = orders.id
 
         WHERE orders.id = $1
       `,
@@ -172,6 +190,48 @@ export const getOrderById = async (req, res) => {
   }
 };
 
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { order_status: orderStatus } = req.body;
+
+    const allowedStatuses = [
+      "new",
+      "processing",
+      "completed",
+      "cancelled",
+    ];
+
+    if (!allowedStatuses.includes(orderStatus)) {
+      return res.status(400).json({
+        message: "Ogiltig orderstatus.",
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE orders
+       SET order_status = $1
+       WHERE id = $2
+       RETURNING *`,
+      [orderStatus, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Ordern hittades inte.",
+      });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Kunde inte uppdatera orderstatus:", error);
+
+    res.status(500).json({
+      message: "Kunde inte uppdatera orderstatus.",
+    });
+  }
+};
+
 export const createOrder = async (req, res) => {
   let client;
   let transactionStarted = false;
@@ -224,39 +284,53 @@ export const createOrder = async (req, res) => {
         );
       }
 
-      const uniqueParticipants = new Map();
+     const participantEmails = new Set();
 
-      item.participants.forEach((participant) => {
-        if (!participant.email) {
-          throw createRequestError(
-            "Deltagarens email måste anges."
-          );
-        }
+const participants = item.participants.map(
+  (participant) => {
+    if (!participant.email) {
+      throw createRequestError(
+        "Deltagarens email måste anges."
+      );
+    }
 
-        const participantEmail = normalizeEmail(
-          participant.email
-        );
+    const participantEmail = normalizeEmail(
+      participant.email
+    );
 
-        if (!isValidEmail(participantEmail)) {
-          throw createRequestError(
-            `Ogiltig email för deltagare: ${participant.email}`
-          );
-        }
+    if (!isValidEmail(participantEmail)) {
+      throw createRequestError(
+        `Ogiltig email för deltagare: ${participant.email}`
+      );
+    }
 
-        uniqueParticipants.set(participantEmail, {
-          email: participantEmail,
-          firstName: normalizeOptionalText(
-            participant.first_name
-          ),
-          lastName: normalizeOptionalText(
-            participant.last_name
-          ),
-        });
-      });
+    if (participantEmails.has(participantEmail)) {
+      throw createRequestError(
+        "Varje deltagare på samma utbildning måste ha en unik e-postadress."
+      );
+    }
+
+    participantEmails.add(participantEmail);
+
+    return {
+      email: participantEmail,
+      firstName: normalizeOptionalText(
+        participant.first_name
+      ),
+      lastName: normalizeOptionalText(
+        participant.last_name
+      ),
+    };
+  }
+);
+
+return {
+  courseSessionId,
+  participants,
+};
 
       return {
-        courseSessionId,
-        participants: [...uniqueParticipants.values()],
+        courseSessionId
       };
     });
 
@@ -531,5 +605,79 @@ export const createOrder = async (req, res) => {
     });
   } finally {
     client?.release();
+  }
+};
+
+export const updateInvoiceStatus = async (req, res) => {
+  const allowedStatuses = [
+    "unpaid",
+    "paid",
+    "overdue",
+    "refunded",
+  ];
+
+  const { id } = req.params;
+  const { invoice_status: invoiceStatus } = req.body;
+
+  if (!allowedStatuses.includes(invoiceStatus)) {
+    return res.status(400).json({
+      message: "Ogiltig fakturastatus.",
+    });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+ const paymentResult = await client.query(
+  `UPDATE payments
+   SET
+     invoice_status = $1::VARCHAR,
+     paid_at = CASE
+       WHEN $1::VARCHAR = 'paid'
+         THEN COALESCE(
+           paid_at,
+           CURRENT_TIMESTAMP
+         )
+       WHEN $1::VARCHAR = 'unpaid'
+         THEN NULL
+       ELSE paid_at
+     END
+   WHERE order_id = $2
+   RETURNING *`,
+  [invoiceStatus, id]
+);
+    if (paymentResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        message: "Fakturan hittades inte.",
+      });
+    }
+
+    await client.query(
+      `UPDATE orders
+       SET payment_status = $1
+       WHERE id = $2`,
+      [invoiceStatus, id]
+    );
+
+    await client.query("COMMIT");
+
+    res.json(paymentResult.rows[0]);
+  } catch (error) {
+    await client.query("ROLLBACK");
+
+    console.error(
+      "Kunde inte uppdatera fakturastatus:",
+      error
+    );
+
+    res.status(500).json({
+      message: "Kunde inte uppdatera fakturastatus.",
+    });
+  } finally {
+    client.release();
   }
 };
