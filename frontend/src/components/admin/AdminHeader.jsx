@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 function AdminHeader() {
   return (
     <header className="admin-header">
-      <div>
-        <strong>Online Studier</strong>
-        <span> Admin</span>
+      <div className="admin-header-fc">
+        <img src="/public/img/logotyp.png" alt="Onlinestudier logo" className="logo" />
+        <h3> Admin</h3>
       </div>
 
       <Link to="/">

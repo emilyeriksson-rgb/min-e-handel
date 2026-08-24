@@ -1,0 +1,21 @@
+:root {
+  --font-family: "Roboto", sans-serif;
+  --border-radius: 0.5rem;
+  --spacing-small: 0.5rem;
+  --spacing-medium: 1rem;
+  --spacing-large: 2rem;
+
+}
+
+.public-layout {
+  --background-color: #ffdeab;
+  --text-color: #480058;
+  --primary-color: #480058;
+}
+
+.admin-layout {
+  --background-color: #ffecd2;
+  --text-color: #222;
+  --primary-color: #480058;
+  --active-color: #ffdeab;
+}

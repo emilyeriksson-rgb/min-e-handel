@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 function AdminSidebar() {
   return (
     <aside className="admin-sidebar">
-      <h2>Administration</h2>
+      <h2>Menu</h2>
 
       <nav
         className="admin-nav"

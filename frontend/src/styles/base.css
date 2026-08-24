@@ -1,0 +1,11 @@
+body {
+  margin: 0;
+  font-family: var(--font-family);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
