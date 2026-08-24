@@ -286,7 +286,7 @@ const handleSessionSubmit = async (event) => {
       </header>
 
       <div className="admin-courses-content">
-        <aside>
+        <aside className="course-list">
           <h2>Courses</h2>
 
           {courses.length === 0 ? (
@@ -295,28 +295,33 @@ const handleSessionSubmit = async (event) => {
             <ul>
               {courses.map((course) => (
                 <li key={course.id}>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectCourse(course)}
-                  >
-                    {course.title}
-                  </button>
+      <button
+        type="button"
+        className="course-list-button"
+        aria-pressed={selectedCourse?.id === course.id}
+onClick={() => handleSelectCourse(course)} >
+        <span>{course.title}</span>
+
+        <small>
+          {course.is_published ? "Published" : "Draft"}
+        </small>
+      </button>
                 </li>
               ))}
             </ul>
           )}
         </aside>
 
-        <div>
-          <h2>
-            {selectedCourse
-              ? `Redigera ${selectedCourse.title}`
-              : "Skapa ny utbildning"}
-          </h2>
+<div className="edit-course">
+  <h2>
+    {selectedCourse
+      ? `Redigera ${selectedCourse.title}`
+      : "Skapa ny utbildning"}
+  </h2>
 
-          <p>
-            {locations.length} platser har hämtats från databasen.
-          </p>
+  <p>
+    {locations.length} platser har hämtats från databasen.
+  </p>
 
 <form onSubmit={handleCourseSubmit}>
   <label htmlFor="title">Title</label>
