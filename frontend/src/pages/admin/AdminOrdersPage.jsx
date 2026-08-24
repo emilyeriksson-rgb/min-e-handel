@@ -169,7 +169,7 @@ const handleCloseOrder = () => {
       {orders.length === 0 ? (
         <p>There are no orders.</p>
       ) : (
-      <table>
+      <table className="admin-table-wrapper">
   <thead>
     <tr>
       <th>Order</th>
@@ -179,7 +179,7 @@ const handleCloseOrder = () => {
       <th>Total</th>
       <th>Invoice Status</th>
       <th>Order Status</th>
-      <th>View</th>
+      <th>Manage Orders</th>
     </tr>
   </thead>
 
@@ -206,12 +206,14 @@ const handleCloseOrder = () => {
 
 
 
-        <td>
+        <td className="order-action-cell">
           <button
+              className="manage-order-button"
             type="button"
+            aria-expanded={selectedOrder?.id === order.id}
             onClick={() => handleSelectOrder(order.id)}
           >
-            View Order
+            Manage order
           </button>
         </td>
       </tr>
@@ -225,26 +227,26 @@ const handleCloseOrder = () => {
 )}
 
 {selectedOrder && !isOrderLoading && (
-  <section>
+  <section className="order-info">
+    
     <h2>Order #{selectedOrder.id}</h2>
+    <div className="status-control">
+
     <label htmlFor="order-status">Order Status</label>
 
-<select
-  id="order-status"
-  value={selectedStatus}
-  onChange={(event) =>
-    setSelectedStatus(event.target.value)
-  }
-  disabled={isStatusSaving || isInvoiceStatusSaving}
->
-  <option value="new">New</option>
-  <option value="processing">Processing</option>
-  <option value="completed">Completed</option>
-  <option value="cancelled">Cancelled</option>
-
-  
-</select>
-
+  <select
+    id="order-status"
+    value={selectedStatus}
+    onChange={(event) =>
+      setSelectedStatus(event.target.value)
+    }
+    disabled={isStatusSaving || isInvoiceStatusSaving}
+  >
+    <option value="new">New</option>
+    <option value="processing">Processing</option>
+    <option value="completed">Completed</option>
+    <option value="cancelled">Cancelled</option>
+  </select>
 
 
 <button
@@ -262,6 +264,9 @@ const handleCloseOrder = () => {
 {statusMessage && (
   <p role="status">{statusMessage}</p>
 )}
+
+</div>
+<div className="status-control">
 
 <h3>Invoice Status</h3>
 
@@ -300,6 +305,8 @@ const handleCloseOrder = () => {
 {invoiceStatusMessage && (
   <p role="status">{invoiceStatusMessage}</p>
 )}
+</div>
+
 
 <h3>Recipient Information</h3>
 
@@ -373,6 +380,7 @@ const handleCloseOrder = () => {
 
 <button
   type="button"
+    className="btn-style"
   onClick={handleCloseOrder}
   disabled={isStatusSaving || isInvoiceStatusSaving}
 >

@@ -14,8 +14,13 @@
 }
 
 .admin-layout {
-  --background-color: #ffecd2;
-  --text-color: #222;
+  --background-color: #867d6f;
+  --yellow-color-1:#efe7f1;
+  --yellow-color-2:#d7c2db;
+  --yellow-color-3:#a986b1;
+  --yellow-color-4:#865f8f;
+
+  --text-color: #33003f;
   --primary-color: #480058;
   --active-color: #ffdeab;
 }
