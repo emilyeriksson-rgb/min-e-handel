@@ -17,7 +17,7 @@ function CartPage() {
 
   if (cartItems.length === 0) {
     return (
-      <main>
+    <main className="site-main cart-page cart-page-empty bokad">
         <h1>Varukorg</h1>
         <p>Din varukorg är tom.</p>
 
@@ -29,12 +29,14 @@ function CartPage() {
   }
 
   return (
-    <main>
+    <main className="site-main cart-page">
       <h1>Varukorg</h1>
 
       <ul>
         {cartItems.map((item) => (
-          <li key={item.courseSessionId}>
+          <li
+          className="cart-item"
+          key={item.courseSessionId}>
            
             <h2>{item.title}</h2>
 
@@ -92,7 +94,7 @@ function CartPage() {
       <section>
         <h2>Sammanställning</h2>
 
-        <p>
+        <p className="cart-total">
           Totalt: <strong>{formatPrice(cartTotal)}</strong>
         </p>
    
