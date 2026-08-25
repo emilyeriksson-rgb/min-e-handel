@@ -436,7 +436,8 @@ onClick={() => handleSelectCourse(course)} >
 <input
   id="image_url"
   name="image_url"
-  type="url"
+  type="text"
+  placeholder="/img/truckutbildning.webp"
   value={courseForm.image_url}
   onChange={handleCourseChange}
 />

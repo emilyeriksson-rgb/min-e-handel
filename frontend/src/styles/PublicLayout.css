@@ -121,12 +121,11 @@ a {
 
 .site-main {
         max-width: 1200px;
-        background-color:var(--shop-accent-light);
+        min-height: calc(100dvh - 5rem);
+       background-color:var(--shop-accent-light);
         margin: 0 auto;
         box-shadow: 0 0.25rem 1rem #000000;
         padding: var(--spacing-small);
-
-        
     }
 
     .site-homepage-header{
@@ -216,4 +215,158 @@ margin: var(--spacing-small);
 
 .course-card strong {
       justify-self: end;
+}
+
+
+/* --------Courses---------- */
+ .course-page {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.6fr)
+    minmax(18rem, 0.8fr);
+  grid-template-areas:
+    "information group"
+    "information sessions";
+
+  gap: var(--spacing-large);
+  padding: var(--spacing-large);
+  
+}
+
+.course-details {
+  grid-area: group;
+}
+
+.course-information {
+    grid-area: information;
+}
+
+.course-sessions {
+  grid-area: sessions;
+}
+
+
+
+.course-information img {
+  display: block;
+
+  width: 100%;
+  max-height: 25rem;
+  aspect-ratio: 16 / 8;
+  object-fit: cover;
+}
+
+.course-information > :not(img) {
+  margin-inline: var(--spacing-large);
+}
+
+.course-information h1 {
+  margin-top: var(--spacing-large);
+  margin-bottom: var(--spacing-small);
+
+  color: var(--shop-text);
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  line-height: 1.1;
+}
+
+.course-information > p {
+  color: var(--shop-text-muted);
+  line-height: 1.7;
+}
+
+.course-details dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem 1rem;
+
+  padding-block: var(--spacing-medium);
+  border-block: 1px solid var(--shop-accent);
+}
+
+.course-details dt {
+  color: var(--shop-text-muted);
+  font-weight: 600;
+}
+
+.course-details dd {
+  margin: 0;
+  color: var(--shop-text);
+  font-weight: 700;
+}
+
+.course-information .site-price {
+  display: block;
+
+  color: var(--shop-primary);
+  font-size: 1.25rem;
+  text-align: right;
+}
+
+.course-sessions {
+  position: sticky;
+  top: 7rem;
+  align-self: start;
+
+  padding: var(--spacing-large);
+
+  border-top: 0.35rem solid var(--shop-primary);
+  border-radius: var(--border-radius);
+  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 15%);
+}
+
+.course-sessions > h2 {
+  margin-top: 0;
+  color: var(--shop-text);
+}
+
+.course-sessions article {
+  position: relative;
+
+  margin-bottom: var(--spacing-medium);
+  padding: var(--spacing-medium);
+
+  background-color: var(--shop-background);
+  border: 2px solid var(--shop-border);
+  border-radius: var(--border-radius);
+}
+
+.course-sessions article:has(input:checked) {
+  background-color: var(--shop-accent);
+  border-color: var(--shop-primary);
+}
+
+.course-sessions input[type="radio"] {
+  width: 1.2rem;
+  height: 1.2rem;
+  accent-color: var(--shop-primary);
+}
+
+.course-sessions label {
+  margin-left: 0.4rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.course-sessions > button {
+  width: 100%;
+  padding: 0.9rem 1.25rem;
+
+  color: #ffffff;
+  font: inherit;
+  font-weight: 800;
+
+  cursor: pointer;
+  background-color: var(--shop-primary);
+  border: 2px solid var(--shop-primary);
+  border-radius: var(--border-radius);
+  margin-top: var(--spacing-large);
+}
+
+.course-sessions > button:hover {
+  background-color: var(--shop-primary-dark);
+}
+
+.course-sessions > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
