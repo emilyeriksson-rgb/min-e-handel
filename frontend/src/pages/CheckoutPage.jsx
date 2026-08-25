@@ -140,7 +140,7 @@ function CheckoutPage() {
 
   if (createdOrder) {
     return (
-      <main className="site-main">
+<main className="site-main checkout-page bokad">  
         <h1>Tack för din bokning!</h1>
 
         <p>
@@ -171,8 +171,8 @@ function CheckoutPage() {
 
   if (cartItems.length === 0) {
     return (
-      <main className="site-main">
-        <h1>Slutför bokning</h1>
+<main className="site-main checkout-page bokad">
+          <h1>Slutför bokning</h1>
 
         <p>Din varukorg är tom.</p>
 
@@ -184,8 +184,8 @@ function CheckoutPage() {
   }
 
   return (
-    <main className="site-main">
-      <h1>Slutför bokning</h1>
+<main className="site-main checkout-page">     
+   <h1>Slutför bokning</h1>
 
       <form onSubmit={handleSubmit}>
         <section>
