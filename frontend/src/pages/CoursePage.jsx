@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   fetchCourseSessions,
   fetchProductById,
@@ -57,7 +57,7 @@ if (!selectedSession) {
 
   if (loading) {
     return (
-      <main>
+      <main className="site-main">
         <Loader message="Kursen laddas..." />
       </main>
     );
@@ -65,7 +65,7 @@ if (!selectedSession) {
 
   if (error) {
     return (
-      <main>
+      <main className="site-main">
         <p role="alert">{error}</p>
       </main>
     );
@@ -85,46 +85,48 @@ const firstSession = sessions[0];
 
 
   return (
-    <main>
-      <section className="course-information">
+<main className="site-main course-page">
+    <section className="course-information">
         {product.image_url && (
           <img
             src={product.image_url}
             alt={product.title}
+            
           />
         )}
 
         <h1>{product.title}</h1>
         <strong> {product.short_description}</strong>
         <p>{product.description}</p>
+<strong className="site-price">{formattedPrice}</strong>
+    </section>
 
-        <dl className="course-details">
-          <dt>Kategori</dt>
-          <dd>{product.category}</dd>
+    <section className="course-details">
+            <dl>
+              <dt>Kategori</dt>
+              <dd>{product.category}</dd>
 
-          <dt>Studietakt</dt>
-          <dd>{product.study_pace}</dd>
+              <dt>Studietakt</dt>
+              <dd>{product.study_pace}</dd>
 
-          <dt>Studieform</dt>
-          <dd>{product.learning_format}</dd>
-    {firstSession?.city && (
-      <>
-        <dt>Ort</dt>
-        <dd>{firstSession.city}</dd>
-      </>
-    )}
+              <dt>Studieform</dt>
+              <dd>{product.learning_format}</dd>
+        {firstSession?.city && (
+          <>
+            <dt>Ort</dt>
+            <dd>{firstSession.city}</dd>
+          </>
+        )}
 
-    {firstSession?.duration && (
-      <>
-        <dt>Utbildningens längd</dt>
-        <dd>{firstSession.duration}</dd>
-      </>
-    )}
-
-        </dl>
-
-        <strong>{formattedPrice}</strong>
+        {firstSession?.duration && (
+          <>
+            <dt>Utbildningens längd</dt>
+            <dd>{firstSession.duration}</dd>
+          </>
+        )}
+            </dl>
       </section>
+      
 
       <section className="course-sessions">
   <h2>Välj kurstillfälle</h2>
@@ -194,7 +196,14 @@ if (session.is_self_paced) {
 
 {message && (
   <p role="status">
-    {message}
+    {message === "Kursen har lagts till i varukorgen." ? (
+      <>
+        Kursen har lagts till i{" "}
+        <Link to="/cart">varukorgen</Link>.
+      </>
+    ) : (
+      message
+    )}
   </p>
 )}
 

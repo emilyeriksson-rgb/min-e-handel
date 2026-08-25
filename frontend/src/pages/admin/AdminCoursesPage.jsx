@@ -183,7 +183,7 @@ const courseData = {
     }
 
     setSelectedCourse(savedCourse);
-    setMessage("Utbildningen har sparats.");
+    setMessage("Course saved successfully.");
   } catch (error) {
     setError(error.message);
   } finally {
@@ -254,7 +254,7 @@ const handleSessionSubmit = async (event) => {
     ]);
 
     setSessionForm(emptySessionForm);
-    setSessionMessage("Kurstillfället har skapats.");
+    setSessionMessage("The course session has been created.");
   } catch (error) {
     setError(error.message);
   } finally {
@@ -263,7 +263,7 @@ const handleSessionSubmit = async (event) => {
 };
 
   if (isLoading) {
-    return <Loader message="Laddar utbildningar..." />;
+    return <Loader message="Loading courses.." />;
   }
 
   if (error) {
@@ -273,52 +273,58 @@ const handleSessionSubmit = async (event) => {
   return (
     <section className="admin-courses">
       <header>
-        <h1>Hantera utbildningar</h1>
+        <h1>Manage Courses</h1>
 
         <button
           type="button"
+          className="btn-style"
           
      onClick={handleNewCourse}
         >
-          Skapa ny utbildning
+          Create new
         </button>
       </header>
 
       <div className="admin-courses-content">
-        <aside>
-          <h2>Utbildningar</h2>
+        <aside className="course-list">
+          <h2>Courses</h2>
 
           {courses.length === 0 ? (
-            <p>Det finns inga utbildningar.</p>
+            <p>There is no courses</p>
           ) : (
             <ul>
               {courses.map((course) => (
                 <li key={course.id}>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectCourse(course)}
-                  >
-                    {course.title}
-                  </button>
+      <button
+        type="button"
+        className="course-list-button"
+        aria-pressed={selectedCourse?.id === course.id}
+onClick={() => handleSelectCourse(course)} >
+        <span>{course.title}</span>
+
+        <small>
+          {course.is_published ? "Published" : "Draft"}
+        </small>
+      </button>
                 </li>
               ))}
             </ul>
           )}
         </aside>
 
-        <div>
-          <h2>
-            {selectedCourse
-              ? `Redigera ${selectedCourse.title}`
-              : "Skapa ny utbildning"}
-          </h2>
+<div className="edit-course">
+  <h2>
+    {selectedCourse
+      ? `Redigera ${selectedCourse.title}`
+      : "Skapa ny utbildning"}
+  </h2>
 
-          <p>
-            {locations.length} platser har hämtats från databasen.
-          </p>
+  <p>
+    {locations.length} platser har hämtats från databasen.
+  </p>
 
 <form onSubmit={handleCourseSubmit}>
-  <label htmlFor="title">Titel</label>
+  <label htmlFor="title">Title</label>
   <input
     id="title"
     name="title"
@@ -336,7 +342,7 @@ const handleSessionSubmit = async (event) => {
     required
   />
 
-  <label htmlFor="price">Pris</label>
+  <label htmlFor="price">Price</label>
   <input
     id="price"
     name="price"
@@ -430,7 +436,8 @@ const handleSessionSubmit = async (event) => {
 <input
   id="image_url"
   name="image_url"
-  type="url"
+  type="text"
+  placeholder="/img/truckutbildning.webp"
   value={courseForm.image_url}
   onChange={handleCourseChange}
 />
@@ -445,7 +452,8 @@ const handleSessionSubmit = async (event) => {
   Publicerad i webbutiken
 </label>
 
-  <button type="submit" disabled={isSaving}>
+  <button type="submit"     className="btn-style"
+ disabled={isSaving}>
     {isSaving ? "Sparar..." : "Spara utbildning"}
   </button>
 
@@ -586,7 +594,8 @@ const handleSessionSubmit = async (event) => {
     placeholder="Lämna tomt om antalet är obegränsat"
   />
 
-  <button type="submit" disabled={isSessionSaving}>
+  <button type="submit"     className="btn-style"
+ disabled={isSessionSaving}>
     {isSessionSaving
       ? "Skapar..."
       : "Skapa kurstillfälle"}

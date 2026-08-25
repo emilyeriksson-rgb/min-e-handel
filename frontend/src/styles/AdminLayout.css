@@ -1,0 +1,351 @@
+
+
+h1, h2, h3, h4 {
+    color: var(--primary-color);
+}
+
+a {
+  color: var(--primary-color);
+  font-weight: 500;
+  text-decoration: none;
+
+}
+
+.btn-style {
+  padding: 0.5rem 1rem;
+
+  color: #ffffff;
+
+  cursor: pointer;
+  background-color: var(--primary-color);
+  border: 0;
+  border-radius: var(--border-radius);
+}
+
+.btn-style:hover {
+  background-color: var(--text-color);
+}
+
+
+
+
+
+.admin-layout {
+  min-height: 100vh;
+  max-width: 1600px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "header header"
+    "sidebar content";
+}
+
+.admin-sidebar {
+  grid-area: sidebar;
+  padding: 1rem;
+  border-right: 1px solid var(--primary-color);  
+}
+
+
+.admin-header {
+  grid-area: header;
+
+  display: flex;
+  align-items: center;
+    justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--primary-color);
+}
+
+.admin-content {
+  grid-area: content;
+  min-width: 0;
+  padding: 2rem;
+}
+
+
+/* Header */
+
+
+.admin-header-fc {
+    display: flex;
+    gap: 1rem;
+
+}
+.admin-header .logo {
+    display: block;
+  width: auto;
+  height: 3rem;
+  object-fit: contain;
+  align-self: center;
+}
+
+/* Sidebar */
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-nav a {
+  display: flex;
+  align-items: center;
+
+  min-height: 2.75rem;
+  padding: 0.75rem 1rem;
+
+  border-left: 0.25rem solid transparent;
+  border-radius:  var( --border-radius);
+
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+}
+
+
+.admin-nav a:hover {
+  background-color: var(--active-color);
+}
+
+.admin-nav a[aria-current="page"] {
+ background-color: var(--active-color);
+ font-weight: 700;
+}
+
+
+/* ----------- Orders ------------ */
+
+.admin-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+
+  background-color: #ffffff;
+  border-radius: var(--border-radius);
+  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 8%);
+}
+
+.admin-table-wrapper table {
+  width: 100%;
+  min-width: 55rem;
+  border-collapse: collapse;
+}
+
+.admin-table-wrapper th,
+.admin-table-wrapper td {
+  padding: 1rem;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid #e4e4e4;
+}
+
+.admin-table-wrapper th {
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background-color: #480058;
+}
+
+.admin-table-wrapper tbody tr:nth-child(even) {
+  background-color: #faf7fb;
+}
+
+.admin-table-wrapper tbody tr:hover {
+  background-color: rgb(72, 0, 88, 10%);
+}
+
+.admin-table-wrapper tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-table-wrapper td {
+  overflow-wrap: anywhere;
+}
+
+
+/* Manage order btn */
+
+.admin-table-wrapper .order-action-cell {
+  padding: 0;
+}
+
+.admin-layout .manage-order-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 4rem;
+  padding: 1rem;
+
+  color: #ffffff;
+  cursor: pointer;
+  background-color: #480058;
+  border: 0;
+  border-radius: 0;
+}
+
+.admin-layout .manage-order-button:hover {
+    background-color: var(--text-color);
+}
+
+.admin-layout .manage-order-button[aria-expanded="true"] {
+    background-color: var(--text-color);
+}
+
+
+/* -----------Order--------- */
+
+.order-info {
+    background-color: var(--yellow-color-1);
+    padding: var(--spacing-large);
+    margin-top: var(--spacing-large);
+    border-radius: var(--border-radius);
+    box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 10%);
+}
+
+.status-control {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  max-width: 30%;
+  gap: var(--spacing-small);
+  margin-bottom: var(--spacing-medium);
+}
+
+.status-control label {
+  grid-column: 1 / -1;
+}
+
+.status-control select {
+  padding: 0.5rem;
+  font: inherit;
+  border: 1px solid var(--active-color);
+  border-radius: var(--border-radius);
+}
+
+.status-control button {
+  color: #ffffff;
+  cursor: pointer;
+  background-color: var(--primary-color);
+  border: 0;
+  border-radius: var(--border-radius);
+}
+
+.status-control button:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+/* --------Dash Board ----------- */
+.admin-dashboard {
+    max-width: 600px;
+}
+
+
+/* Manage coures */
+
+  .course-list {
+    margin-top: var(--spacing-medium);
+    margin-bottom: var(--spacing-large);
+  align-self: start;
+  padding: var(--spacing-medium);
+
+  background-color: #ffffff;
+  border-radius: var(--border-radius);
+  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 8%);
+}
+
+
+.course-list ul {
+  display: grid;
+  gap: var(--spacing-small);
+
+  max-height: 65vh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.course-list-button {
+  display: flex;
+  justify-content: space-between;
+
+  width: 100%;
+  padding: 0.875rem 1rem;
+
+  cursor: pointer;
+  background-color: #f7f7f7;
+  border: 2px solid transparent;
+  border-radius: var(--border-radius);
+}
+
+.course-list-button:hover {
+  background-color: var(--yellow-color-1);
+}
+
+.course-list-button[aria-pressed="true"] {
+  color: #ffffff;
+  background-color: var(--primary-color);
+  border-color: var(--yellow-color-1);
+}
+
+.course-list-button small {
+  opacity: 0.75;
+}
+
+
+
+.edit-course {
+  min-width: 0;
+  padding: var(--spacing-large);
+
+  background-color: #ffffff;
+  border-radius: var(--border-radius);
+  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 8%);
+
+}
+
+.edit-course > h2, .course-list > h2 {
+  margin-top: 0;
+  padding-bottom: var(--spacing-medium);
+  border-bottom: 2px solid var(--yellow-color-1);
+}
+
+.edit-course > form {
+    display: grid;
+gap: var(--spacing-medium);}
+
+
+
+.edit-course input:not([type="checkbox"]),
+.edit-course select,
+.edit-course textarea {
+  width: 400px;
+  padding: 0.5rem;
+    border-radius: var(--border-radius);
+  border: 1px solid #b8b8b8;
+
+}
+
+
+.edit-course textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.edit-course input:focus-visible,
+.edit-course select:focus-visible,
+.edit-course textarea:focus-visible {
+  border-color: var(--primary-color);
+  outline: 3px solid rgb(72 0 88 / 20%);
+  outline-offset: 1px;
+}
+
+.edit-course form button {
+      justify-self: start;
+
+}

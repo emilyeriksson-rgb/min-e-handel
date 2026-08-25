@@ -29,13 +29,13 @@ function HomePage() {
   }, []);
 
   return (
-    <main>
-      <header>
+    <main className="site-main">
+      <header className="site-homepage-header">
         <h1>Kurser</h1>
         <p>Utforska kurser online, i egen takt eller på plats.</p>
       </header>
 
-      <section>
+      <section className="course-grid">
         {isLoading && (
           <Loader message="Laddar kurser..." />
         )}

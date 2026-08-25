@@ -3,22 +3,22 @@ import { NavLink } from "react-router-dom";
 function AdminSidebar() {
   return (
     <aside className="admin-sidebar">
-      <h2>Administration</h2>
+      <h2>Menu</h2>
 
       <nav
         className="admin-nav"
         aria-label="Adminnavigation"
       >
         <NavLink to="/admin" end>
-          Översikt
+          Dashboard
         </NavLink>
 
         <NavLink to="/admin/courses">
-          Utbildningar
+         Manage Courses
         </NavLink>
 
         <NavLink to="/admin/orders">
-          Beställningar
+          Manage Orders
         </NavLink>
       </nav>
     </aside>
