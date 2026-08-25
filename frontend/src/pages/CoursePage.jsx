@@ -57,7 +57,7 @@ if (!selectedSession) {
 
   if (loading) {
     return (
-      <main>
+      <main className="site-main">
         <Loader message="Kursen laddas..." />
       </main>
     );
@@ -65,7 +65,7 @@ if (!selectedSession) {
 
   if (error) {
     return (
-      <main>
+      <main className="site-main">
         <p role="alert">{error}</p>
       </main>
     );
@@ -85,7 +85,7 @@ const firstSession = sessions[0];
 
 
   return (
-    <main>
+    <main className="site-main">
       <section className="course-information">
         {product.image_url && (
           <img

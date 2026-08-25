@@ -11,22 +11,15 @@ function CourseCard({ product }) {
             currency: "SEK",
         });
 
-    return (
-        <Link to={`/courses/${product.id}`} className="course-card-link" aria-label={`Läs mer om ${product.title}`}
->
+return (
+    <Link to={`/courses/${product.id}`} className="course-card-link" aria-label={`Läs mer om ${product.title}`}>
         <article className="course-card">
-            {product.image_url && (
-                <img
-                    src={product.image_url}
-                    alt={product.title}
-                />
-            )}
             <p className="category">{product.category}</p>
-            <h2>{product.title}</h2>
-<p className="description">
-  {product.short_description || product.description}
-</p>            <p className="study-info">{product.study_pace} {product.learning_format}</p>
+            {product.image_url && (<img src={product.image_url} alt={product.title}/>)}
+            <h2 className="title">{product.title}</h2>
+            <p className="description">{product.short_description || product.description}</p>
             <strong>{formattedPrice}</strong>
+            <p className="study-info">{product.study_pace} | {product.learning_format}</p>
         </article>
     </Link>
 );
