@@ -6,6 +6,7 @@ import courseRoutes from "./routes/courseRoutes.js";
 import courseSessionRoutes from "./routes/courseSessionRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import locationRoutes from "./routes/locationRoutes.js";
+import currencyRoutes from "./routes/currencyRoutes.js";
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/course-sessions", courseSessionRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/locations", locationRoutes);
+app.use("/api/currency", currencyRoutes);
 
 app.get("/", (req, res) => {
   res.json({
