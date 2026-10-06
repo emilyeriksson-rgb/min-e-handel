@@ -242,3 +242,13 @@ export const updateInvoiceStatus = async (
 
   return data;
 };
+
+export const fetchCurrencyRates = async () => {
+  const response = await fetch(`${API_URL}/currency`);
+
+  if (!response.ok) {
+    throw new Error("Kunde inte hämta valutakurser.");
+  }
+
+  return response.json();
+};
