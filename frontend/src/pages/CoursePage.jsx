@@ -6,11 +6,13 @@ import {
 } from "../api/api.js";
 import Loader from "../components/Loader.jsx";
 import useCart from "../hooks/useCart.js";
+import useCurrency from "../hooks/useCurrency.js";
 
 
 function CoursePage() {
   const { id } = useParams();
   const { addToCart } = useCart();
+  const { currency, rates } = useCurrency();
 
   const [product, setProduct] = useState(null);
   const [sessions, setSessions] = useState([]);
@@ -76,10 +78,14 @@ if (!selectedSession) {
       ? product.sale_price
       : product.price;
 
-  const formattedPrice = Number(currentPrice).toLocaleString("sv-SE", {
-    style: "currency",
-    currency: "SEK",
-  });
+const rate = rates[currency];
+
+const formattedPrice = rate === undefined
+  ? "Valutakurs saknas"
+  : (Number(currentPrice) * rate).toLocaleString("sv-SE", {
+      style: "currency",
+      currency,
+    });
 
 const firstSession = sessions[0];
 

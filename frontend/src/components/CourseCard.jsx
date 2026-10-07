@@ -1,15 +1,21 @@
 import { Link } from "react-router-dom";
+import useCurrency from "../hooks/useCurrency.js";
 
 function CourseCard({ product }) {
+    const { currency, rates } = useCurrency();
     const currentPrice =
     product.is_on_sale && product.sale_price
         ? product.sale_price
         : product.price;
 
-        const formattedPrice = Number(currentPrice).toLocaleString("sv-SE", {
-            style: "currency",
-            currency: "SEK",
-        });
+ const rate = rates[currency];
+
+const formattedPrice = rate === undefined
+  ? "Valutakurs saknas"
+  : (Number(currentPrice) * rate).toLocaleString("sv-SE", {
+      style: "currency",
+      currency,
+    });
 
 return (
     <Link to={`/courses/${product.id}`} className="course-card-link" aria-label={`Läs mer om ${product.title}`}>

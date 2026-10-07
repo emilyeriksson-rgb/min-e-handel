@@ -1,19 +1,32 @@
 import { Link } from "react-router-dom";
 import useCart from "../hooks/useCart.js";
+import useCurrency from "../hooks/useCurrency.js";
 
 function CartPage() {
-  const {
-    cartItems,
-    removeFromCart,
-    updateQuantity,
-    cartTotal,
-  } = useCart();
+  const {cartItems, removeFromCart, updateQuantity, cartTotal,} = useCart();
+  const { currency, rates } = useCurrency();
 
-  const formatPrice = (price) =>
-    Number(price).toLocaleString("sv-SE", {
-      style: "currency",
-      currency: "SEK",
-    });
+const formatPrice = (priceInSek) => {
+  const amount = Number(priceInSek);
+
+  const sekPrice = amount.toLocaleString("sv-SE", {
+    style: "currency",
+    currency: "SEK",
+  });
+
+  if (currency === "SEK" || rates[currency] === undefined) {
+    return sekPrice;
+  }
+
+  const convertedPrice = (
+    amount * rates[currency]
+  ).toLocaleString("sv-SE", {
+    style: "currency",
+    currency,
+  });
+
+  return `${sekPrice} ≈ ${convertedPrice}`;
+};
 
   if (cartItems.length === 0) {
     return (
@@ -93,6 +106,9 @@ function CartPage() {
 
       <section>
         <h2>Sammanställning</h2>
+        <p>
+          Valutaomräknade priser är ungefärliga. Fakturering sker i SEK.
+        </p>
 
         <p className="cart-total">
           Totalt: <strong>{formatPrice(cartTotal)}</strong>

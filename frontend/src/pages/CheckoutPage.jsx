@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import useCart from "../hooks/useCart.js";
 import { createOrder } from "../api/api.js";
+import useCurrency from "../hooks/useCurrency.js";
 
 function CheckoutPage() {
   const {
@@ -9,6 +10,7 @@ function CheckoutPage() {
     cartTotal,
     clearCart,
   } = useCart();
+  const { currency, rates } = useCurrency();
 
   const [billingRecipient, setBillingRecipient] =
     useState({
@@ -50,11 +52,31 @@ function CheckoutPage() {
   const [createdOrder, setCreatedOrder] =
     useState(null);
 
-  const formatPrice = (price) =>
-    Number(price).toLocaleString("sv-SE", {
-      style: "currency",
-      currency: "SEK",
-    });
+const formatPrice = (priceInSek) => {
+  const amount = Number(priceInSek);
+
+  const sekPrice = amount.toLocaleString("sv-SE", {
+    style: "currency",
+    currency: "SEK",
+  });
+
+  if (currency === "SEK") {
+    return sekPrice;
+  }
+
+  const rate = rates[currency];
+
+  if (rate === undefined) {
+    return sekPrice;
+  }
+
+  const convertedPrice = (amount * rate).toLocaleString("sv-SE", {
+    style: "currency",
+    currency,
+  });
+
+  return `${sekPrice} ≈ ${convertedPrice}`;
+};
 
   const handleBillingChange = (event) => {
     const { name, value } = event.target;
@@ -424,6 +446,8 @@ function CheckoutPage() {
 
         <section>
           <h2>Sammanställning</h2>
+          <p>Valutaomräknade priser är ungefärliga. Fakturering sker i SEK.
+          </p>
 
           <p>
             Totalt:{" "}

@@ -5,14 +5,17 @@ import './styles/variables.css'
 import "./styles/base.css";
 import App from './App.jsx'
 import CartProvider from "./context/CartProvider.jsx";
+import CurrencyProvider from "./context/CurrencyProvider.jsx";
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <CartProvider>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </CartProvider>
-  </StrictMode>,
+    <CurrencyProvider>
+      <CartProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </CartProvider>
+    </CurrencyProvider>
+  </StrictMode>
 );
 
