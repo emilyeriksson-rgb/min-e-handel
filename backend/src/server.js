@@ -7,6 +7,7 @@ import courseSessionRoutes from "./routes/courseSessionRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import locationRoutes from "./routes/locationRoutes.js";
 import currencyRoutes from "./routes/currencyRoutes.js";
+import errorHandler from "./middleware/errorHandler.js";
 
 dotenv.config();
 
@@ -43,6 +44,8 @@ app.get("/api/database-test", async (req, res) => {
     });
   }
 });
+
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`Servern körs på http://localhost:${port}`);
