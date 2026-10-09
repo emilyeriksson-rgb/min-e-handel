@@ -1,0 +1,28 @@
+.kursrum-loader {
+  grid-column: 1 / -1;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.kursrum-loader__picture {
+  display: block;
+  width: clamp(8rem, 15vw, 11rem);
+}
+
+.kursrum-loader__picture img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.kursrum-loader__message {
+  margin: 0;
+  color: #52627a;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
