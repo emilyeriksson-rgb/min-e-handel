@@ -4,7 +4,7 @@ function AdminHeader() {
   return (
     <header className="admin-header">
       <div className="admin-header-fc">
-        <img src="/public/img/logotyp.png" alt="Onlinestudier logo" className="logo" />
+        <img src="/public/img/logotyp.png" alt="Kursrum logo" className="logo" />
         <h3> Admin</h3>
       </div>
 

@@ -1,49 +1,40 @@
-import { Link, NavLink } from "react-router-dom";
-import useCart from "../hooks/useCart.js";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { FiShoppingCart } from "react-icons/fi";
+import useCart from "../hooks/useCart.js";
 import useCurrency from "../hooks/useCurrency.js";
 
-
 function Header() {
-    const { cartCount } = useCart();
-    const { currency, setCurrency, loading, error, } = useCurrency();
+  const { pathname } = useLocation();
+  const isHomePage = pathname === "/";
+  const { cartCount } = useCart();
+  const { currency, setCurrency, loading, error } = useCurrency();
 
   return (
-    <header className="site-header">
+    <header
+      className={`site-header${isHomePage ? " site-header--home" : ""}`}
+    >
       <div className="site-header-content">
-        <div className="site-header-brand">
-          <Link to="/"  aria-label="Onlinestudier startsida"><img src="/img/onlinestudier-logo-dark.webp" alt="Onlinestudier" className="site-header__logo" /></Link>
-          <span className="site-header__partner">I sammarbete med<img src="/img/talivo-logo.webp" alt="talivo" className="site-talivo-logo" /></span>
-        </div>
+        {!isHomePage && (
+          <div className="site-header-brand">
+            <Link to="/" aria-label="Kursrum startsida">
+              <img
+                src="/img/SVG/loga.svg"
+                alt="Kursrum"
+                className="site-header__logo"
+              />
+            </Link>
+          </div>
+        )}
 
-        <div className="currency-selector">
-  <label htmlFor="currency">Valuta</label>
-
-        <NavLink
-          to="/cart"
-          className="site-header__cart"
-          aria-label={`Varukorg, ${cartCount} ${
-            cartCount === 1 ? "produkt" : "produkter"
-          }`}
-        >
-          <FiShoppingCart
-            aria-hidden="true"
-            focusable="false"
-          />
-
-          {cartCount > 0 && (
-            <span aria-hidden="true">
-              {cartCount}
-            </span>
-          )}
-        </NavLink>
-      </div>
-          <div>
-
+        <div className="header-actions">
+          <div className="header-currency">
+            <label className="visually-hidden" htmlFor="currency">
+              Valuta
+            </label>
 
             <select
-              disabled={loading || Boolean(error)}
               id="currency"
+              disabled={loading || Boolean(error)}
               value={currency}
               onChange={(event) => setCurrency(event.target.value)}
             >
@@ -58,11 +49,24 @@ function Header() {
             )}
 
             {error && (
-              <span role="alert">
-                {error} Priser visas i SEK.
-              </span>
+              <span role="alert">{error} Priser visas i SEK.</span>
             )}
           </div>
+
+          <NavLink
+            to="/cart"
+            className="site-header__cart"
+            aria-label={`Varukorg, ${cartCount} ${
+              cartCount === 1 ? "produkt" : "produkter"
+            }`}
+          >
+            <FiShoppingCart aria-hidden="true" focusable="false" />
+
+            {cartCount > 0 && (
+              <span aria-hidden="true">{cartCount}</span>
+            )}
+          </NavLink>
+        </div>
       </div>
     </header>
   );

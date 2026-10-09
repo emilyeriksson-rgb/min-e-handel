@@ -1,12 +1,7 @@
-function CategoryFilters({
-  categories,
-  selectedCategory,
-  onCategoryChange,
-}) {
+function CategoryFilters({ categories, selectedCategory, onCategoryChange }) {
   return (
     <fieldset className="category-filters">
-      <legend>Kategori</legend>
-
+      <legend className="visually-hidden">Kategori</legend>
       <button
         type="button"
         aria-pressed={selectedCategory === ""}
@@ -14,7 +9,6 @@ function CategoryFilters({
       >
         Alla kategorier
       </button>
-
       {categories.map((category) => (
         <button
           key={category}
