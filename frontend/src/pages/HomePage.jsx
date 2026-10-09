@@ -33,6 +33,7 @@ function HomePage() {
   const { currency, rates } = useCurrency();
   const [priceRange, setPriceRange] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -77,12 +78,37 @@ function HomePage() {
 
   const categories = [...new Set(products.map(getCategory).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, "sv"));
-  const filteredProducts = products.filter((product) =>
-    matchesSearch(product, query) && matchesPrice(product) &&
-    (selectedCategory === "" || getCategory(product) === selectedCategory) &&
-    (learningFormat === "" || getFormat(product) === learningFormat) &&
-    (studyPace === "" || getPace(product) === studyPace)
-  );
+
+  const cities = [
+  ...new Set(
+    products
+      .filter((product) =>
+        getFormat(product) === "onsite" &&
+        matchesSearch(product, query) &&
+        matchesPrice(product) &&
+        (selectedCategory === "" ||
+          getCategory(product) === selectedCategory) &&
+        (studyPace === "" ||
+          getPace(product) === studyPace)
+      )
+      .flatMap((product) => product.cities ?? [])
+      .filter(Boolean)
+  ),
+].sort((a, b) => a.localeCompare(b, "sv"));
+
+const filteredProducts = products.filter((product) =>
+  matchesSearch(product, query) &&
+  matchesPrice(product) &&
+  (selectedCategory === "" ||
+    getCategory(product) === selectedCategory) &&
+  (learningFormat === "" ||
+    getFormat(product) === learningFormat) &&
+  (studyPace === "" ||
+    getPace(product) === studyPace) &&
+  (learningFormat !== "onsite" ||
+    selectedCity === "" ||
+    (product.cities ?? []).includes(selectedCity))
+);
   const formatCounts = { online: 0, onsite: 0, hybrid: 0 };
   const paceCounts = { "eget tempo": 0, heltid: 0, deltid: 0 };
   products.forEach((product) => {
@@ -103,6 +129,12 @@ function HomePage() {
     setLearningFormat("");
     setStudyPace("");
     setPriceRange(null);
+    setSelectedCity("");
+  }
+
+  function changeLearningFormat(value) {
+    setLearningFormat(value);
+    setSelectedCity("");
   }
 
   return (
@@ -136,12 +168,23 @@ function HomePage() {
         <aside className="catalog-sidebar" aria-labelledby="catalog-filter-heading">
           <h2 id="catalog-filter-heading">Filtrera</h2>
           <CourseFilters
-            learningFormat={learningFormat} onLearningFormatChange={setLearningFormat}
-            studyPace={studyPace} onStudyPaceChange={setStudyPace}
-            formatCounts={formatCounts} paceCounts={paceCounts}
-            currency={currency} minPrice={minPrice} maxPrice={maxPrice}
-            onMinPriceChange={changeMinPrice} onMaxPriceChange={changeMaxPrice}
-            lowestPrice={lowestPrice} highestPrice={highestPrice} hasPrices={hasPrices}
+            learningFormat={learningFormat}
+            onLearningFormatChange={changeLearningFormat}
+            cities={cities}
+            selectedCity={selectedCity}
+            onCityChange={setSelectedCity}
+            studyPace={studyPace}
+            onStudyPaceChange={setStudyPace}
+            formatCounts={formatCounts}
+            paceCounts={paceCounts}
+            currency={currency}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            onMinPriceChange={changeMinPrice}
+            onMaxPriceChange={changeMaxPrice}
+            lowestPrice={lowestPrice}
+            highestPrice={highestPrice}
+            hasPrices={hasPrices}
           />
           <button className="filter-reset" type="button" onClick={resetFilters}>
             Rensa sökning och filter

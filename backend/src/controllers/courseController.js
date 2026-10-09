@@ -3,9 +3,22 @@ import pool from "../config/db.js";
 // GET /api/courses
 export const getAllCourses = async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM courses ORDER BY created_at DESC"
-    );
+ const result = await pool.query(`
+  SELECT
+    courses.*,
+    ARRAY(
+      SELECT DISTINCT TRIM(locations.city)
+      FROM course_sessions
+      JOIN locations
+        ON locations.id = course_sessions.location_id
+      WHERE course_sessions.course_id = courses.id
+        AND locations.city IS NOT NULL
+        AND TRIM(locations.city) <> ''
+      ORDER BY TRIM(locations.city)
+    ) AS cities
+  FROM courses
+  ORDER BY courses.created_at DESC
+`);
 
     res.json(result.rows);
   } catch (error) {

@@ -5,7 +5,10 @@ import useCurrency from "../hooks/useCurrency.js";
 
 function Header() {
   const { pathname } = useLocation();
-  const isHomePage = pathname === "/";
+const isHomePage =
+  pathname === "/" ||
+  pathname === "/courses" ||
+  pathname === "/courses/";
   const { cartCount } = useCart();
   const { currency, setCurrency, loading, error } = useCurrency();
 

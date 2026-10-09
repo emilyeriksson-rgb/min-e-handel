@@ -1,6 +1,9 @@
 function CourseFilters({
   learningFormat,
   onLearningFormatChange,
+  cities = [],
+  selectedCity,
+  onCityChange,
   studyPace,
   onStudyPaceChange,
   formatCounts,
@@ -33,6 +36,24 @@ function CourseFilters({
           <option value="hybrid" disabled={formatCounts.hybrid === 0}>Hybrid ({formatCounts.hybrid})</option>
         </select>
       </div>
+      {learningFormat === "onsite" && (
+        <div className="filter-field">
+          <label htmlFor="course-city">Ort</label>
+          <select
+            id="course-city"
+            value={selectedCity}
+            onChange={(event) => onCityChange(event.target.value)}
+          >
+            <option value="">Alla orter</option>
+
+            {cities.map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="filter-field">
         <label htmlFor="study-pace">Studietakt</label>
         <select id="study-pace" value={studyPace}
