@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "node --watch src/server.js"
   },
   "repository": {
     "type": "git",
@@ -20,17 +20,15 @@
   },
   "homepage": "https://github.com/Medieinstitutet/fsu25d-systemutveckling-uppgift-1-min-egna-e-handel-emilyeriksson-rgb#readme",
   "devDependencies": {
-    "@types/node": "^26.6.4",
-    "nodemon": "^3.1.14"
+    "@types/node": "^26.6.5"
   },
   "dependencies": {
     "cors": "^2.8.6",
+    "csv-parse": "^7.0.3",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "fast-xml-parser": "^5.11.2",
     "pg": "^8.21.0",
     "zod": "^4.6.5"
-  },
-  "script": {
-    "dev": "nodemon src/server.js"
   }
 }
