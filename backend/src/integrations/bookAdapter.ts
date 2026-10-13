@@ -55,6 +55,43 @@ const SupplierCsvBook = z.object({
 
 type SupplierCsvBook = z.infer<typeof SupplierCsvBook>;
 
+const SupplierXmlResponse = z.object({
+  katalog: z.object({
+    produkt: z.array(z.unknown()),
+  }),
+});
+
+const SupplierXmlBook = z.object({
+  "@_artNr": z.string().trim().min(1),
+  ean: z.string(),
+  benamning: z.string().trim().min(1),
+  kategori: z.string().trim().min(1),
+
+  pris: z.object({
+    "#text": z.string().regex(
+      /^\d+\.\d{2}$/,
+      "Priset måste anges som exempelvis 499.00"
+    ),
+    "@_valuta": z.literal("SEK"),
+  }),
+
+  lagersaldo: z.string().regex(
+    /^\d*$/,
+    "Lagersaldo måste vara ett heltal eller tomt"
+  ),
+
+  varianter: z.union([
+    z.literal(""),
+    z.object({
+      variant: z.array(z.string()).default([]),
+    }),
+  ]).default(""),
+
+  uppdaterad: z.iso.datetime(),
+});
+
+type SupplierXmlBook = z.infer<typeof SupplierXmlBook>;
+
 export type Book = {
   sku: string;
   title: string;
@@ -94,6 +131,26 @@ function csvToBook(row: SupplierCsvBook): Book {
       .map((variant) => variant.trim())
       .filter(Boolean),
     updatedAt: `${row.uppdaterad}T00:00:00.000Z`,
+  };
+}
+
+function xmlToBook(row: SupplierXmlBook): Book {
+  const variants = typeof row.varianter === "string"
+    ? []
+    : row.varianter.variant;
+
+  return {
+    sku: row["@_artNr"],
+    title: row.benamning,
+    category: row.kategori,
+    price: Number(row.pris["#text"]),
+    stock: row.lagersaldo === ""
+      ? 0
+      : Number(row.lagersaldo),
+    variants: variants
+      .map((variant) => variant.trim())
+      .filter(Boolean),
+    updatedAt: row.uppdaterad,
   };
 }
 
@@ -206,6 +263,68 @@ export async function getBooksFromCsv() {
     }
 
     books.push(csvToBook(result.data));
+  }
+
+  return { books, skipped };
+}
+
+async function fetchBookXmlRows(): Promise<unknown[]> {
+  const baseUrl = process.env.SUPPLIER_API_URL;
+  const apiKey = process.env.SUPPLIER_API_KEY;
+
+  if (!baseUrl || !apiKey) {
+    throw new Error("Leverantörens URL eller API-nyckel saknas.");
+  }
+
+  const url = new URL(
+    `${baseUrl.replace(/\/$/, "")}/export/products.xml`
+  );
+  url.searchParams.set("bransch", "kurslitteratur");
+
+  const xml = await fetchText(url.toString(), {
+    headers: { "X-Api-Key": apiKey },
+    timeoutMs: 5000,
+    encoding: "utf-8",
+  });
+
+  const parsed = xmlParser.parse(xml, true);
+  const result = SupplierXmlResponse.safeParse(parsed);
+
+  if (!result.success) {
+    throw new Error(
+      `XML-katalogen har fel format:\n${z.prettifyError(result.error)}`
+    );
+  }
+
+  return result.data.katalog.produkt;
+}
+
+export async function getBooksFromXml() {
+  const rows = await fetchBookXmlRows();
+  const books: Book[] = [];
+  const skipped: { sku: string; reason: string }[] = [];
+
+  for (const row of rows) {
+    const result = SupplierXmlBook.safeParse(row);
+
+    if (!result.success) {
+      const article = z.object({
+        "@_artNr": z.string(),
+      }).safeParse(row);
+
+      const problem = {
+        sku: article.success
+          ? article.data["@_artNr"]
+          : "Okänt",
+        reason: z.prettifyError(result.error),
+      };
+
+      skipped.push(problem);
+      console.warn("Hoppar över kurslitteratur:", problem);
+      continue;
+    }
+
+    books.push(xmlToBook(result.data));
   }
 
   return { books, skipped };

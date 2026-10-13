@@ -25,6 +25,7 @@ app.use("/api/locations", locationRoutes);
 app.use("/api/currency", currencyRoutes);
 app.use("/api/books", bookRoutes);
 
+
 app.get("/", (req, res) => {
   res.json({
     message: "E-handelns API fungerar!",
