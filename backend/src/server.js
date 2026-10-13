@@ -8,6 +8,8 @@ import orderRoutes from "./routes/orderRoutes.js";
 import locationRoutes from "./routes/locationRoutes.js";
 import currencyRoutes from "./routes/currencyRoutes.js";
 import errorHandler from "./middleware/errorHandler.js";
+import bookRoutes from "./routes/bookRoutes.js";
+import { XMLParser } from "fast-xml-parser";
 
 dotenv.config();
 
@@ -21,6 +23,7 @@ app.use("/api/course-sessions", courseSessionRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/locations", locationRoutes);
 app.use("/api/currency", currencyRoutes);
+app.use("/api/books", bookRoutes);
 
 app.get("/", (req, res) => {
   res.json({
