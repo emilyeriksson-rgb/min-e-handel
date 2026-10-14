@@ -43,6 +43,12 @@
 .edit-course label { display: block; margin-bottom: 0.4rem; font-size: 0.9375rem; font-weight: 600; }
 .edit-course input:not([type="checkbox"]):not([type="radio"]), .edit-course select, .edit-course textarea { width: 100%; }
 .edit-course form button { justify-self: start; }
+
+.book-import-actions {  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  max-width: 24rem;}
+
 @media (max-width: 55rem) {
   .admin-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto 1fr; grid-template-areas: "header" "sidebar" "content"; }
   .admin-sidebar { padding: 0.75rem 1rem; border-right: 0; border-bottom: 1px solid var(--color-border); }

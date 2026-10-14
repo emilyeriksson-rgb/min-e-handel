@@ -252,3 +252,22 @@ export const fetchCurrencyRates = async () => {
 
   return response.json();
 };
+
+export const importBooks = async (format) => {
+  const response = await fetch(
+    `${API_URL}/books/import/${format}`,
+    {
+      method: "POST",
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Kunde inte importera kurslitteraturen."
+    );
+  }
+
+  return data;
+};

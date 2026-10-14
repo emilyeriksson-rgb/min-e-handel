@@ -11,6 +11,7 @@ import CheckoutPage from "./pages/CheckoutPage.jsx";
 import AdminHomePage from "./pages/admin/AdminHomePage.jsx";
 import AdminCoursesPage from "./pages/admin/AdminCoursesPage.jsx";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage.jsx";
+import AdminBooksPage from "./pages/admin/AdminBooksPage.jsx";
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
   <Route index element={<AdminHomePage />} />
   <Route path="courses" element={<AdminCoursesPage />} />
   <Route path="orders" element={<AdminOrdersPage />} />
+  <Route path="books" element={<AdminBooksPage />} />
 </Route>
     </Routes>
   );
