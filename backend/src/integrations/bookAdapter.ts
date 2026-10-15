@@ -14,12 +14,26 @@ const xmlParser = new XMLParser({
     path === "katalog.produkt.varianter.variant",
 });
 
+const MAX_STOCK = 2_147_483_647;
+const MAX_PRICE_ORE = 999_999_999_999;
+const MAX_PRICE = MAX_PRICE_ORE / 100;
+
+const SupplierStockText = z.string()
+  .regex(
+    /^\d*$/,
+    "Lagersaldo måste vara ett heltal eller tomt"
+  )
+  .refine(
+    (value) => Number(value) <= MAX_STOCK,
+    `Lagersaldo måste vara ett tal högst ${MAX_STOCK}`
+  );
+
 const SupplierBook = z.object({
   artNr: z.string(),
   benamning: z.string(),
   kategori: z.string(),
-  prisOre: z.int().nonnegative(),
-  lagersaldo: z.int().nonnegative().nullable(),
+  prisOre: z.int().nonnegative().max(MAX_PRICE_ORE),
+  lagersaldo: z.int().nonnegative().max(MAX_STOCK).nullable(),
   varianter: z.string(),
   uppdaterad: z.iso.datetime(),
 });
@@ -38,16 +52,17 @@ const SupplierCsvBook = z.object({
   ean: z.string(),
   benamning: z.string().trim().min(1),
   kategori: z.string().trim().min(1),
-
-  pris: z.string().regex(
+pris: z.string()
+  .regex(
     /^\d+,\d{2}$/,
     "Priset måste anges som exempelvis 499,00"
+  )
+  .refine(
+    (value) => Number(value.replace(",", ".")) <= MAX_PRICE,
+    "Priset måste vara ett tal högst 9999999999,99 kr"
   ),
 
-  lagersaldo: z.string().regex(
-    /^\d*$/,
-    "Lagersaldo måste vara ett heltal eller tomt"
-  ),
+lagersaldo: SupplierStockText,
 
   varianter: z.string(),
   uppdaterad: z.iso.date(),
@@ -66,19 +81,20 @@ const SupplierXmlBook = z.object({
   ean: z.string(),
   benamning: z.string().trim().min(1),
   kategori: z.string().trim().min(1),
-
-  pris: z.object({
-    "#text": z.string().regex(
+pris: z.object({
+  "#text": z.string()
+    .regex(
       /^\d+\.\d{2}$/,
       "Priset måste anges som exempelvis 499.00"
+    )
+    .refine(
+      (value) => Number(value) <= MAX_PRICE,
+      "Priset måste vara ett tal högst 9999999999.99 kr"
     ),
-    "@_valuta": z.literal("SEK"),
-  }),
+  "@_valuta": z.literal("SEK"),
+}),
 
-  lagersaldo: z.string().regex(
-    /^\d*$/,
-    "Lagersaldo måste vara ett heltal eller tomt"
-  ),
+lagersaldo: SupplierStockText,
 
   varianter: z.union([
     z.literal(""),

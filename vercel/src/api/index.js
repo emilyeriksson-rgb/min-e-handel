@@ -6,6 +6,8 @@ import courseRoutes from "../../backend/routes/courseRoutes.js";
 import courseSessionRoutes from "../../backend/routes/courseSessionRoutes.js";
 import orderRoutes from "../../backend/routes/orderRoutes.js";
 import locationRoutes from "../../backend/routes/locationRoutes.js";
+import bookRoutes from "../../backend/routes/bookRoutes.js";
+import errorHandler from "../../backend/middleware/errorHandler.js";
 
 const app = express();
 
@@ -16,7 +18,7 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/course-sessions", courseSessionRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/locations", locationRoutes);
-
+app.use("/api/books", bookRoutes);
 app.get("/", (req, res) => {
   res.json({
     message: "E-handelns API fungerar!",
@@ -46,5 +48,7 @@ res.json({
     });
   }
 });
+
+app.use(errorHandler);
 
 export default app;
