@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { fetchProducts } from "../api/api.js";
+import { fetchCatalog } from "../api/api.js";
+import BookCard from "../components/BookCard.jsx";
 import CourseCard from "../components/CourseCard.jsx";
 import Loader from "../components/Loader.jsx";
 import SearchInput from "../components/SearchInput.jsx";
@@ -7,6 +8,7 @@ import CourseFilters from "../components/CourseFilters.jsx";
 import useCurrency from "../hooks/useCurrency.js";
 import CategoryFilters from "../components/CategoryFilters.jsx";
 import OwlContact from "../components/OwlContact.jsx";
+import ProductTypeFilters from "../components/ProductTypeFilters.jsx";
 
 function getFormat(product) {
   const format = String(product.learning_format ?? "").trim().toLowerCase();
@@ -34,12 +36,13 @@ function HomePage() {
   const [priceRange, setPriceRange] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
+  const [productType, setProductType] = useState("all");
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const data = await fetchProducts();
-        setProducts(data.filter((product) => product.is_published));
+        const data = await fetchCatalog();
+      setProducts(data);
       } catch (error) {
         setError(error.message);
       } finally {
@@ -51,7 +54,10 @@ function HomePage() {
 
   const query = searchText.trim().toLowerCase();
   const rate = rates[currency];
-  const prices = products.map((product) => {
+  const typeProducts = products.filter(
+  (product) => productType === "all" || product.type === productType
+);
+  const prices = typeProducts.map((product) => {
     const priceInSek = product.is_on_sale && product.sale_price != null
       ? product.sale_price : product.price;
     return Number(priceInSek) * rate;
@@ -76,12 +82,12 @@ function HomePage() {
     return Number.isFinite(convertedPrice) && convertedPrice >= minPrice && convertedPrice <= maxPrice;
   }
 
-  const categories = [...new Set(products.map(getCategory).filter(Boolean))]
+  const categories = [...new Set(typeProducts.map(getCategory).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, "sv"));
 
   const cities = [
   ...new Set(
-    products
+    typeProducts
       .filter((product) =>
         getFormat(product) === "onsite" &&
         matchesSearch(product, query) &&
@@ -96,7 +102,7 @@ function HomePage() {
   ),
 ].sort((a, b) => a.localeCompare(b, "sv"));
 
-const filteredProducts = products.filter((product) =>
+const filteredProducts = typeProducts.filter((product) =>
   matchesSearch(product, query) &&
   matchesPrice(product) &&
   (selectedCategory === "" ||
@@ -111,7 +117,7 @@ const filteredProducts = products.filter((product) =>
 );
   const formatCounts = { online: 0, onsite: 0, hybrid: 0 };
   const paceCounts = { "eget tempo": 0, heltid: 0, deltid: 0 };
-  products.forEach((product) => {
+  typeProducts.forEach((product) => {
     if (!matchesSearch(product, query) || !matchesPrice(product)) return;
     if (selectedCategory !== "" && getCategory(product) !== selectedCategory) return;
     const format = getFormat(product);
@@ -130,12 +136,34 @@ const filteredProducts = products.filter((product) =>
     setStudyPace("");
     setPriceRange(null);
     setSelectedCity("");
+    setProductType("all");
   }
 
   function changeLearningFormat(value) {
     setLearningFormat(value);
     setSelectedCity("");
   }
+
+function changeProductType(value) {
+  const nextProducts = products.filter(
+    (product) => value === "all" || product.type === value
+  );
+
+  const categoryExists = nextProducts.some(
+    (product) => getCategory(product) === selectedCategory
+  );
+
+  setProductType(value);
+
+  if (!categoryExists) {
+    setSelectedCategory("");
+  }
+
+  setLearningFormat("");
+  setStudyPace("");
+  setSelectedCity("");
+  setPriceRange(null);
+}
 
   return (
     <main className="site-main site-homepage">
@@ -160,11 +188,31 @@ const filteredProducts = products.filter((product) =>
       </header>
 
       <div className="catalog-layout">
-        <div className="catalog-toolbar">
-          <SearchInput value={searchText} onChange={setSearchText} />
-          <CategoryFilters categories={categories} selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory} />
-        </div>
+    <div className="catalog-toolbar">
+  <h2 className="catalog-heading">
+    Kurser och kurslitteratur
+  </h2>
+
+  <SearchInput
+    value={searchText}
+    onChange={setSearchText}
+  />
+
+  <div className="catalog-type-row">
+    <ProductTypeFilters
+      value={productType}
+      onChange={changeProductType}
+    />
+  </div>
+
+  <div className="catalog-category-row">
+    <CategoryFilters
+      categories={categories}
+      selectedCategory={selectedCategory}
+      onCategoryChange={setSelectedCategory}
+    />
+  </div>
+</div>
         <aside className="catalog-sidebar" aria-labelledby="catalog-filter-heading">
           <h2 id="catalog-filter-heading">Filtrera</h2>
           <CourseFilters
@@ -187,27 +235,30 @@ const filteredProducts = products.filter((product) =>
             hasPrices={hasPrices}
           />
           <button className="filter-reset" type="button" onClick={resetFilters}>
-            Rensa sökning och filter
+            Rensa
           </button>
         </aside>
 
         <div className="catalog-results">
           {!isLoading && !error && (
             <p className="catalog-count" role="status">
-              Visar {filteredProducts.length} av {products.length} kurser
-            </p>
+              Visar {filteredProducts.length} av {typeProducts.length} produkter</p>
           )}
           <section className="course-grid" aria-label="Utbildningar" aria-busy={isLoading}>
-            {isLoading && <div className="catalog-message"><Loader message="Laddar kurser..." /></div>}
+            {isLoading && <div className="catalog-message"><Loader message="Laddar produkter..." /></div>}
             {!isLoading && error && <p className="catalog-message" role="alert">{error}</p>}
             {!isLoading && !error && products.length === 0 && (
-              <p className="catalog-message">Det finns inga publicerade kurser just nu.</p>
+              <p className="catalog-message">Det finns inga publicerade produkter just nu.</p>
             )}
-            {!isLoading && !error && filteredProducts.map((product) => (
-              <CourseCard key={product.id} product={product} />
-            ))}
+          {!isLoading && !error && filteredProducts.map((product) =>
+            product.type === "book" ? (
+              <BookCard key={`book-${product.sku}`} product={product} />
+            ) : (
+              <CourseCard key={`course-${product.id}`} product={product} />
+            )
+          )}
             {!isLoading && !error && products.length > 0 && filteredProducts.length === 0 && (
-              <p className="catalog-message" role="status">Inga kurser matchar din sökning och dina filter.</p>
+              <p className="catalog-message" role="status">Inga produkter matchar din sökning och dina filter.</p>
             )}
           </section>
         </div>

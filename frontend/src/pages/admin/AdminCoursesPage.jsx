@@ -44,6 +44,7 @@ const [areSessionsLoading, setAreSessionsLoading] =
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [courseForm, setCourseForm] = useState(emptyCourseForm);
 const [message, setMessage] = useState("");
+const [searchWarning, setSearchWarning] = useState("");
 const [isSaving, setIsSaving] = useState(false);
 
 const [sessionForm, setSessionForm] =
@@ -104,6 +105,7 @@ useEffect(() => {
   setSelectedCourse(null);
   setCourseForm(emptyCourseForm);
   setMessage("");
+  setSearchWarning("");
   setSessions([]);
 setSessionMessage("");
 };
@@ -183,7 +185,8 @@ const courseData = {
     }
 
     setSelectedCourse(savedCourse);
-    setMessage("Course saved successfully.");
+  setMessage("Kursen har sparats.");
+  setSearchWarning(savedCourse.searchIndexWarning ?? "");
   } catch (error) {
     setError(error.message);
   } finally {
@@ -458,6 +461,7 @@ onClick={() => handleSelectCourse(course)} >
   </button>
 
   {message && <p role="status">{message}</p>}
+  {searchWarning && <p role="alert">{searchWarning}</p>}
 </form>       
 {selectedCourse && (
   <section>

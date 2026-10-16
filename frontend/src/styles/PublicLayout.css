@@ -318,3 +318,110 @@
     background-image: none;
   }
 }
+
+.product-type-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 0 1rem;
+}
+
+.product-type-filters button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.875rem;
+  padding: 0.75rem 1.25rem;
+
+  border: 1px solid var(--shop-border);
+  border-radius: var(--radius-small);
+
+  background: var(--shop-surface);
+  color: var(--shop-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.product-type-filters button:hover {
+  background: var(--shop-accent);
+  border-color: var(--shop-primary);
+}
+
+.product-type-filters button[aria-pressed="true"] {
+  background: var(--shop-primary);
+  border-color: var(--shop-primary);
+  color: white;
+}
+
+.product-type-filters button[aria-pressed="true"]:hover {
+  background: var(--shop-primary-dark);
+  border-color: var(--shop-primary-dark);
+}
+
+.product-type-filters button:focus-visible {
+  outline: 3px solid var(--shop-primary);
+  outline-offset: 3px;
+}
+
+.catalog-toolbar {
+  min-width: 0;
+}
+
+.catalog-type-row,
+.catalog-category-row {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.catalog-category-row {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-block: 0.25rem 0.75rem;
+}
+
+.catalog-category-row .category-filters {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.catalog-category-row .category-filters button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.book-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.book-card__image {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+  background: var(--shop-accent);
+  border-radius: var(--radius-small);
+  font-size: 4rem;
+}
+
+.book-card__badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.35rem 0.65rem;
+  background: var(--shop-surface);
+  color: var(--shop-text);
+  border-radius: var(--radius-small);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.book-card > button {
+  margin-top: auto;
+}

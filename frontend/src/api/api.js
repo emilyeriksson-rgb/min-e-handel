@@ -271,3 +271,58 @@ export const importBooks = async (format) => {
 
   return data;
 };
+
+export async function searchBooks(query, page = 1) {
+  const params = new URLSearchParams({
+    q: query,
+    page: String(page),
+    pageSize: "10",
+  });
+
+  const response = await fetch(`${API_URL}/search?${params}`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Kunde inte söka kurslitteratur.");
+  }
+
+  return data;
+}
+
+export async function searchProducts({
+  query = "",
+  type = "all",
+  category = "",
+  page = 1,
+  signal,
+} = {}) {
+  const params = new URLSearchParams({
+    q: query,
+    type,
+    page: String(page),
+    pageSize: "12",
+    category,
+  });
+
+  const response = await fetch(`${API_URL}/search?${params}`, {
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      "Kunde inte hämta sökresultatet. Försök igen senare."
+    );
+  }
+
+  return response.json();
+}
+
+export async function fetchCatalog() {
+  const response = await fetch(`${API_URL}/catalog`);
+
+  if (!response.ok) {
+    throw new Error("Kunde inte hämta kurser och kurslitteratur.");
+  }
+
+  return response.json();
+}
