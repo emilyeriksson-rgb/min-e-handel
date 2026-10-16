@@ -75,6 +75,15 @@ function AdminBooksPage() {
               Skipped: {report.skippedCount}.
             </p>
 
+            {report.searchIndexWarning && (
+              <p role="alert">{report.searchIndexWarning}</p>
+            )}
+
+            {report.searchIndexUpdated && (
+              <p role="status">Sökindexet är uppdaterat.</p>
+            )}
+
+
             {report.skipped.length > 0 && (
               <>
                 <h4>Skipped Products</h4>
