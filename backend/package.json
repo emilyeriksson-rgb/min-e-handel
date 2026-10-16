@@ -23,6 +23,7 @@
     "@types/node": "^26.6.5"
   },
   "dependencies": {
+    "algoliasearch": "^5.60.0",
     "cors": "^2.8.6",
     "csv-parse": "^7.0.3",
     "dotenv": "^17.4.2",
