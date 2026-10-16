@@ -1,4 +1,4 @@
-import { fetchJson } from "../lib/fetchJson.ts";
+import { fetchJson } from "../lib/fetchJson.js";
 import { z } from "zod";
 
 const FrankfurterRates = z.object({

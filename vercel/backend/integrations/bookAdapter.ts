@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { fetchJson } from "../lib/fetchJson.ts";
-import { fetchText } from "../lib/fetchText.ts";
+import { fetchJson } from "../lib/fetchJson.js";
+import { fetchText } from "../lib/fetchText.js";
 import { parse } from "csv-parse/sync";
 import { XMLParser } from "fast-xml-parser";
 

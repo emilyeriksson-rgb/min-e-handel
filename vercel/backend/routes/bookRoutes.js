@@ -3,7 +3,7 @@ import {
   getBooks,
   getBooksFromCsv,
   getBooksFromXml,
-} from "../integrations/bookAdapter.ts";
+} from "../integrations/bookAdapter.js";
 import { importBooks } from "../services/bookImportService.js";
 
 const router = Router();

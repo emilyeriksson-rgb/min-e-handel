@@ -3,7 +3,7 @@ import { upsertBook } from "../models/bookModel.js";
 import {
   getBooksFromCsv,
   getBooksFromXml,
-} from "../integrations/bookAdapter.ts";
+} from "../integrations/bookAdapter.js";
 
 export async function importBooks(format) {
   if (format !== "csv" && format !== "xml") {
