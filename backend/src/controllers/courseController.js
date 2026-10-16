@@ -1,6 +1,6 @@
 import pool from "../config/db.js";
+import { syncCourseSearch } from "../services/courseSearchService.js";
 
-// GET /api/courses
 export const getAllCourses = async (req, res) => {
   try {
  const result = await pool.query(`
@@ -30,7 +30,6 @@ export const getAllCourses = async (req, res) => {
   }
 };
 
-// GET /api/courses/:id
 export const getCourseById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -121,7 +120,13 @@ export const createCourse = async (req, res) => {
       ]
     );
 
-    res.status(201).json(result.rows[0]);
+    const searchStatus = await syncCourseSearch(result.rows[0].id);
+
+    res.status(201).json({
+      ...result.rows[0],
+      ...searchStatus,
+    });
+
   } catch (error) {
     console.error("Kunde inte skapa kursen:", error);
 
@@ -210,7 +215,13 @@ export const updateCourse = async (req, res) => {
       });
     }
 
-    res.json(result.rows[0]);
+    const searchStatus = await syncCourseSearch(result.rows[0].id);
+
+    res.json({
+      ...result.rows[0],
+      ...searchStatus,
+    });
+
   } catch (error) {
     console.error("Kunde inte redigera kursen:", error);
 
@@ -226,7 +237,7 @@ export const updateCourse = async (req, res) => {
     });
   }
 };
-// DELETE /api/courses/:id
+
 export const deleteCourse = async (req, res) => {
   try {
     const { id } = req.params;
@@ -242,10 +253,14 @@ export const deleteCourse = async (req, res) => {
       });
     }
 
+   const searchStatus = await syncCourseSearch(result.rows[0].id);
+
     res.json({
       message: "Kursen har tagits bort.",
       course: result.rows[0],
+      ...searchStatus,
     });
+
   } catch (error) {
     console.error("Kunde inte ta bort kursen:", error);
 

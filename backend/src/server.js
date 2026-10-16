@@ -11,6 +11,7 @@ import errorHandler from "./middleware/errorHandler.js";
 import bookRoutes from "./routes/bookRoutes.js";
 import { XMLParser } from "fast-xml-parser";
 import searchRoutes from "./routes/searchRoutes.js";
+import catalogRoutes from "./routes/catalogRoutes.js";
 
 dotenv.config();
 
@@ -26,7 +27,7 @@ app.use("/api/locations", locationRoutes);
 app.use("/api/currency", currencyRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/search", searchRoutes);
-
+app.use("/api/catalog", catalogRoutes);
 app.get("/", (req, res) => {
   res.json({
     message: "E-handelns API fungerar!",
