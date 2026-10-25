@@ -1,0 +1,35 @@
+/* Knappar: gemensam storlek och primär knappstil. Ikonknappar har egna mått. */
+
+button,
+.btn-style,
+.manage-order-button,
+.cart-page section > a,
+.cart-page-empty > a {
+  min-height: 2.75rem;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  justify-self: start;
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+
+.btn-style {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.15rem;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-small);
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.btn-style:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  color: white;
+}

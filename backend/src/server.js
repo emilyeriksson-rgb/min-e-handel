@@ -9,7 +9,6 @@ import locationRoutes from "./routes/locationRoutes.js";
 import currencyRoutes from "./routes/currencyRoutes.js";
 import errorHandler from "./middleware/errorHandler.js";
 import bookRoutes from "./routes/bookRoutes.js";
-import { XMLParser } from "fast-xml-parser";
 import searchRoutes from "./routes/searchRoutes.js";
 import catalogRoutes from "./routes/catalogRoutes.js";
 
@@ -53,6 +52,10 @@ app.get("/api/database-test", async (req, res) => {
 
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`Servern körs på http://localhost:${port}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(port, () => {
+    console.log(`Servern körs på http://localhost:${port}`);
+  });
+}
+
+export default app;

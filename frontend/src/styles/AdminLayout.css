@@ -1,64 +1,380 @@
-/* Administration använder samma färger och kontroller som butiken. */
-.admin-layout {
-  display: grid; grid-template-columns: 14rem minmax(0, 1fr); grid-template-rows: auto 1fr;
-  grid-template-areas: "header header" "sidebar content";
-  min-height: 100dvh; max-width: 100rem; margin-inline: auto;
-  background: var(--color-background); color: var(--color-text);
-}
-.admin-header { grid-area: header; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--color-border); background: var(--color-surface); }
-.admin-header-fc { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
-.admin-header .logo { width: auto; height: 2.5rem; max-width: 16rem; object-fit: contain; }
-.admin-sidebar { grid-area: sidebar; padding: 1.5rem 1rem; border-right: 1px solid var(--color-border); background: var(--color-surface); min-width: 0; }
-.admin-nav { display: flex; flex-direction: column; gap: 0.4rem; }
-.admin-nav a { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-small); color: var(--color-muted); text-decoration: none; border: 1px solid transparent; }
-.admin-nav a:hover { color: var(--color-primary); background: var(--color-background); }
-.admin-nav a[aria-current="page"] { color: var(--color-primary-hover); background: var(--color-tint); border-color: #b8cef9; font-weight: 600; }
-.admin-content { grid-area: content; min-width: 0; padding: clamp(1rem, 3vw, 2.5rem); }
-.admin-content > h1 { margin-top: 0; font-size: clamp(1.75rem, 3vw, 2.5rem); }
-.admin-dashboard { max-width: 50rem; }
-.admin-table-wrapper { width: 100%; overflow-x: auto; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--border-radius); }
-.admin-table-wrapper table { width: 100%; min-width: 55rem; border-collapse: collapse; font-size: 0.9375rem; }
-.admin-table-wrapper th, .admin-table-wrapper td { padding: 1rem 1.25rem; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--color-border); }
-.admin-table-wrapper th { color: var(--color-muted); font-weight: 600; font-size: 0.8125rem; background: var(--color-background); white-space: nowrap; }
-.admin-table-wrapper tbody tr:hover { background: #f5f8ff; }
-.admin-table-wrapper tbody tr:last-child td { border-bottom: 0; }
-.admin-table-wrapper td { overflow-wrap: anywhere; }
-.admin-table-wrapper .order-action-cell { padding: 0.5rem 1rem; }
-.admin-layout .manage-order-button { min-height: 2.75rem; width: 100%; padding: 0.6rem 0.9rem; color: var(--color-primary); background: white; border: 1px solid var(--color-input-border); border-radius: var(--radius-small); font-weight: 600; }
-.admin-layout .manage-order-button:hover, .admin-layout .manage-order-button[aria-expanded="true"] { background: var(--color-tint); border-color: var(--color-primary); }
-.order-info { margin-top: 1.5rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--border-radius); background: var(--color-surface); }
-.status-control { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem; width: 100%; max-width: 30rem; margin-bottom: 1rem; }
-.status-control label { grid-column: 1 / -1; font-weight: 600; font-size: 0.875rem; }
-.status-control button { padding: 0.65rem 1rem; border: 1px solid var(--color-primary); border-radius: var(--radius-small); background: var(--color-primary); color: white; font-weight: 600; }
-.status-control button:hover:not(:disabled) { background: var(--color-primary-hover); }
-.course-list, .edit-course { min-width: 0; padding: 1.5rem; margin-block: 1rem 1.5rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--border-radius); }
-.course-list { align-self: start; }
-.course-list > h2, .edit-course > h2 { margin-top: 0; padding-bottom: 1rem; border-bottom: 1px solid var(--color-border); }
-.course-list ul { display: grid; gap: 0.5rem; max-height: 65vh; overflow-y: auto; margin: 0; padding: 0.25rem; list-style: none; }
-.course-list-button { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.25rem 1rem; width: 100%; padding: 0.85rem 1rem; text-align: left; background: var(--color-background); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-small); }
-.course-list-button:hover { background: var(--color-tint); border-color: var(--color-primary); }
-.course-list-button[aria-pressed="true"] { color: var(--color-primary-hover); background: var(--color-tint); border-color: var(--color-primary); font-weight: 600; }
-.course-list-button small { color: inherit; }
-.edit-course > form { display: grid; gap: 1rem; }
-.edit-course label { display: block; margin-bottom: 0.4rem; font-size: 0.9375rem; font-weight: 600; }
-.edit-course input:not([type="checkbox"]):not([type="radio"]), .edit-course select, .edit-course textarea { width: 100%; }
-.edit-course form button { justify-self: start; }
+/* Administration: layout, tabeller, formulär och bokdialog. */
 
-.book-import-actions {  display: flex;
+/* Layout och navigering */
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: 14rem minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "header header" "sidebar content";
+  min-height: 100dvh;
+  max-width: 100rem;
+  margin-inline: auto;
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.admin-header {
+  grid-area: header;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.admin-header-fc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.admin-header .logo {
+  width: auto;
+  height: 2.5rem;
+  max-width: 16rem;
+  object-fit: contain;
+}
+
+.admin-sidebar {
+  grid-area: sidebar;
+  padding: 1.5rem 1rem;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+  min-width: 0;
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.admin-nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-small);
+  color: var(--color-muted);
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.admin-nav a:hover {
+  color: var(--color-primary);
+  background: var(--color-background);
+}
+
+.admin-nav a[aria-current="page"] {
+  color: var(--color-primary-hover);
+  background: var(--color-tint);
+  border-color: #b8cef9;
+  font-weight: 600;
+}
+
+.admin-content {
+  grid-area: content;
+  min-width: 0;
+  padding: clamp(1rem, 3vw, 2.5rem);
+}
+
+.admin-content > h1 {
+  margin-top: 0;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+.admin-dashboard {
+  max-width: 50rem;
+}
+
+/* Tabeller och orderhantering */
+
+.admin-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+}
+
+.admin-table-wrapper table {
+  width: 100%;
+  min-width: 55rem;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.admin-table-wrapper th,
+.admin-table-wrapper td {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-table-wrapper th {
+  color: var(--color-muted);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  background: var(--color-background);
+  white-space: nowrap;
+}
+
+.admin-table-wrapper tbody tr:hover {
+  background: #f5f8ff;
+}
+
+.admin-table-wrapper tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-table-wrapper td {
+  overflow-wrap: anywhere;
+}
+
+.admin-table-wrapper .order-action-cell {
+  padding: 0.5rem 1rem;
+}
+
+.admin-layout .manage-order-button {
+  padding: 0.6rem 0.9rem;
+  color: var(--color-primary);
+  background: white;
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-small);
+  font-weight: 600;
+}
+
+.admin-layout .manage-order-button:hover,
+.admin-layout .manage-order-button[aria-expanded="true"] {
+  background: var(--color-tint);
+  border-color: var(--color-primary);
+}
+
+.order-info {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-surface);
+}
+
+.status-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 30rem;
+  margin-bottom: 1rem;
+}
+
+.status-control label {
+  grid-column: 1 / -1;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.status-control button {
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-small);
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+}
+
+.status-control button:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+/* Kurslista och kursformulär */
+
+.course-list,
+.edit-course {
+  min-width: 0;
+  padding: 1.5rem;
+  margin-block: 1rem 1.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+}
+
+.course-list {
+  align-self: start;
+}
+
+.course-list > h2,
+.edit-course > h2 {
+  margin-top: 0;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.course-list ul {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 65vh;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+}
+
+.course-list-button {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  padding: 0.85rem 1rem;
+  text-align: left;
+  background: var(--color-background);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+}
+
+.course-list-button:hover {
+  background: var(--color-tint);
+  border-color: var(--color-primary);
+}
+
+.course-list-button[aria-pressed="true"] {
+  color: var(--color-primary-hover);
+  background: var(--color-tint);
+  border-color: var(--color-primary);
+  font-weight: 600;
+}
+
+.course-list-button small {
+  color: inherit;
+}
+
+.edit-course > form {
+  display: grid;
+  gap: 1rem;
+}
+
+.edit-course label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.edit-course input:not([type="checkbox"]):not([type="radio"]),
+.edit-course select,
+.edit-course textarea {
+  width: 100%;
+}
+
+/* Import av kurslitteratur */
+
+.book-import-actions {
+  display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  max-width: 24rem;}
+  max-width: 24rem;
+}
 
 @media (max-width: 55rem) {
-  .admin-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto 1fr; grid-template-areas: "header" "sidebar" "content"; }
-  .admin-sidebar { padding: 0.75rem 1rem; border-right: 0; border-bottom: 1px solid var(--color-border); }
-  .admin-nav { flex-direction: row; flex-wrap: wrap; }
-  .admin-nav a { padding: 0.5rem 0.75rem; }
+  .admin-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas: "header" "sidebar" "content";
+  }
+
+  .admin-sidebar {
+    padding: 0.75rem 1rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .admin-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .admin-nav a {
+    padding: 0.5rem 0.75rem;
+  }
 }
+
 @media (max-width: 35rem) {
-  .admin-header { padding: 1rem; }
-  .course-list, .edit-course, .order-info { padding: 1rem; }
-  .status-control { grid-template-columns: minmax(0, 1fr); }
-  .status-control button { justify-self: start; }
+  .admin-header {
+    padding: 1rem;
+  }
+
+  .course-list,
+  .edit-course,
+  .order-info {
+    padding: 1rem;
+  }
+
+  .status-control {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
-.edit-course label:has(input[type="checkbox"]), .edit-course label:has(input[type="radio"]) { display: flex; align-items: center; gap: 0.6rem; min-height: 2.75rem; }
+
+.edit-course label:has(input[type="checkbox"]),
+.edit-course label:has(input[type="radio"]) {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+}
+
+/* Dialog för redigering av kurslitteratur */
+
+.book-edit-dialog {
+  box-sizing: border-box;
+  width: min(36rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 20%);
+}
+
+.book-edit-dialog::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+
+.book-edit-dialog h3 {
+  margin-top: 0;
+}
+
+.book-edit-dialog fieldset {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.book-edit-dialog legend {
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.book-edit-dialog input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.book-edit-dialog .book-delete-button {
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+  background: var(--color-danger-tint);
+}

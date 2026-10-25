@@ -1,0 +1,156 @@
+/* Sidhuvud, valuta och varukorg */
+
+.site-header {
+  background: transparent;
+  border-bottom: 0;
+}
+
+.site-header-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  max-width: var(--content-width);
+  margin-inline: auto;
+  padding: 1.25rem var(--page-gutter);
+}
+
+.site-header-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-right: auto;
+  min-width: 0;
+}
+
+.site-header-brand a {
+  display: inline-block;
+}
+
+.site-header__logo {
+  width: auto;
+  height: 2.75rem;
+  max-width: min(100%, 18rem);
+  object-fit: contain;
+}
+
+.site-header__partner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--shop-text-muted);
+  font-size: 0.75rem;
+}
+
+.site-talivo-logo {
+  width: auto;
+  height: 1.1rem;
+  object-fit: contain;
+}
+
+.currency-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  order: 3;
+}
+
+.currency-selector > label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.site-header-content > div:last-child:not(.site-header-brand):not(.currency-selector) {
+  order: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 24rem;
+}
+
+.site-header select {
+  min-width: 5.5rem;
+}
+
+.site-header [role="status"],
+.site-header [role="alert"] {
+  flex-basis: 100%;
+  max-width: 22rem;
+  font-size: 0.8125rem;
+}
+
+.site-header__cart {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--shop-border);
+  border-radius: var(--radius-small);
+  color: var(--shop-text);
+  background: var(--shop-surface);
+  text-decoration: none;
+}
+
+.site-header__cart:hover {
+  background: var(--shop-accent);
+  border-color: var(--shop-primary);
+  color: var(--shop-primary);
+}
+
+.site-header__cart svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke-width: 1.8;
+}
+
+.site-header__cart span {
+  position: absolute;
+  top: -0.45rem;
+  right: -0.45rem;
+  display: grid;
+  place-items: center;
+  min-width: 1.3rem;
+  height: 1.3rem;
+  padding-inline: 0.2rem;
+  border-radius: 999px;
+  background: var(--shop-primary);
+  color: white;
+  border: 2px solid white;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.site-header .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+  max-width: none;
+}
+
+.header-currency {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 22rem;
+}
+
+.header-currency select {
+  align-self: flex-end;
+  border: none;
+  background: transparent;
+}
+
+.site-header--home .site-header-content {
+  padding-block: 0.75rem;
+}

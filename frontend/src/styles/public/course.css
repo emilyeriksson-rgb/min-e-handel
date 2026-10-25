@@ -1,0 +1,132 @@
+/* Kursdetaljer och kurstillfällen */
+
+.course-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(17rem, 1fr);
+  grid-template-areas: "information group" "information sessions";
+  align-items: start;
+  gap: 1.5rem 2rem;
+}
+
+.course-information {
+  grid-area: information;
+  min-width: 0;
+}
+
+.course-information img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 27rem;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+}
+
+.course-information h1 {
+  margin-block: 1.75rem 1rem;
+}
+
+.course-information > p {
+  max-width: 65ch;
+  color: var(--shop-text-muted);
+  line-height: 1.8;
+}
+
+.course-information .site-price {
+  display: block;
+  font-size: 1.5rem;
+  color: var(--shop-text);
+  margin-block: 1.5rem;
+}
+
+.course-details {
+  grid-area: group;
+  padding: 1.5rem;
+  background: var(--shop-surface);
+  border: 1px solid var(--shop-border);
+  border-radius: var(--border-radius);
+  min-width: 0;
+}
+
+.course-details dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  margin: 0;
+}
+
+.course-details dt {
+  color: var(--shop-text-muted);
+}
+
+.course-details dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.course-sessions {
+  grid-area: sessions;
+  align-self: start;
+  padding: 1.5rem;
+  background: var(--shop-surface);
+  border: 1px solid var(--shop-border);
+  border-radius: var(--border-radius);
+  min-width: 0;
+}
+
+.course-sessions > h2 {
+  margin-top: 0;
+}
+
+.course-sessions article {
+  margin-bottom: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-small);
+}
+
+.course-sessions article:has(input:checked) {
+  background: var(--shop-accent);
+  border-color: var(--shop-primary);
+}
+
+.course-sessions article:focus-within {
+  border-color: var(--shop-primary);
+}
+
+.course-sessions label {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.course-sessions select {
+  width: 100%;
+}
+
+.course-sessions > button,
+.checkout-page button[type="submit"] {
+  min-height: 2.875rem;
+  padding: 0.75rem 1rem;
+  margin-top: 1rem;
+  border: 1px solid var(--shop-primary);
+  border-radius: var(--radius-small);
+  color: white;
+  background: var(--shop-primary);
+  font-weight: 600;
+}
+
+.course-sessions > button:hover:not(:disabled),
+.checkout-page button[type="submit"]:hover:not(:disabled) {
+  background: var(--shop-primary-dark);
+  border-color: var(--shop-primary-dark);
+}
+
+.course-sessions label:has(input),
+.checkout-page label:has(input[type="checkbox"]),
+.checkout-page label:has(input[type="radio"]) {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+}

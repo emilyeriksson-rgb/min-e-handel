@@ -1,0 +1,141 @@
+/* Responsiva anpassningar och systeminställningar */
+
+@media (max-width: 50rem) {
+  .site-main {
+    padding-top: 1.75rem;
+  }
+
+  .course-page {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "information" "group" "sessions";
+  }
+
+  .checkout-page form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .checkout-page form > section:last-child {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 35rem) {
+  .site-header-content {
+    gap: 1rem;
+  }
+
+  .site-header-brand {
+    flex-basis: 100%;
+  }
+
+  .site-header-content > div:last-child:not(.site-header-brand):not(.currency-selector) {
+    flex: 1;
+  }
+
+  .site-header__logo {
+    height: 2.25rem;
+  }
+
+  .course-grid {
+    gap: 1rem;
+  }
+
+  .course-details,
+  .course-sessions,
+  .cart-item,
+  .checkout-page form > section {
+    padding: 1.25rem;
+  }
+
+  .cart-item {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cart-item label,
+  .cart-item input,
+  .cart-item button {
+    grid-column: 1;
+  }
+
+  .cart-item label {
+    margin-top: 0.75rem;
+  }
+
+  .course-details dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+  }
+
+  .course-details dd {
+    text-align: left;
+    margin-bottom: 0.75rem;
+  }
+
+  .cart-page > section {
+    text-align: left;
+  }
+}
+
+@media (min-width: 1101px) {
+  .catalog-layout {
+    grid-template-columns: 16rem minmax(0, 1fr);
+    grid-template-areas: "filters toolbar" "filters results";
+    gap: 1.25rem 2rem;
+    align-items: start;
+  }
+
+  .catalog-sidebar {
+    align-self: start;
+  }
+
+  .site-homepage .course-filters {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .site-homepage .course-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .site-homepage .price-filter {
+    grid-column: 1 / -1;
+  }
+
+  .site-homepage .homepage-hero {
+    gap: 1rem;
+    padding-bottom: 2rem;
+  }
+
+  .homepage-hero__image {
+    width: clamp(5rem, 22vw, 8rem);
+  }
+}
+
+@media (max-width: 400px) {
+  .site-homepage .course-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .catalog-sidebar {
+    padding: 1.1rem;
+  }
+}
+
+@media (min-width: 701px) {
+  .site-homepage .homepage-hero {
+    grid-template-columns: fit-content(60%) minmax(0, 1fr);
+  }
+
+  .homepage-hero__image {
+    justify-self: center;
+  }
+}
+
+@media (forced-colors: active) {
+  .course-filters .filter-field select {
+    appearance: auto;
+    background-image: none;
+  }
+}

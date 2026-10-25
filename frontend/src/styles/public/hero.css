@@ -1,0 +1,54 @@
+/* Startsida: logotyp, introduktion och uggla */
+
+.site-homepage-header {
+  padding-block: 0.5rem 1.5rem;
+}
+
+.site-homepage-header h1 {
+  margin-block: 0 0.75rem;
+  max-width: 22ch;
+}
+
+.site-homepage-header p {
+  color: var(--shop-text-muted);
+  max-width: 65ch;
+}
+
+.site-homepage .homepage-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(1.5rem, 5vw, 5rem);
+  padding-block: 2.5rem;
+  height: 50dvh;
+  min-height: 30dvh;
+}
+
+.homepage-hero__text {
+  min-width: 0;
+}
+
+.site-homepage .homepage-hero h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  margin-bottom: 1rem;
+}
+
+.site-homepage .homepage-hero p {
+  margin: 0;
+  font-size: clamp(1rem, 1.7vw, 1.2rem);
+  max-width: 52ch;
+  line-height: 1.7;
+}
+
+.homepage-hero__image {
+  width: clamp(8rem, 18vw, 15rem);
+  height: auto;
+  object-fit: contain;
+}
+
+.homepage-hero__logo {
+  width: min(100%, 22rem);
+  height: auto;
+  margin-bottom: 1.5rem;
+}

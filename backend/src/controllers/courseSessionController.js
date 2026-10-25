@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { syncCourseSearch } from "../services/courseSearchService.js";
 
 const createValidationError = (message) => {
   const error = new Error(message);
@@ -306,7 +307,8 @@ export const createCourseSession = async (
       ]
     );
 
-    res.status(201).json(result.rows[0]);
+    const searchStatus = await syncCourseSearch(result.rows[0].course_id);
+    res.status(201).json({ ...result.rows[0], ...searchStatus });
   } catch (error) {
     console.error(
       "Kunde inte skapa kurstillfälle:",
@@ -404,7 +406,8 @@ export const updateCourseSession = async (
       ]
     );
 
-    res.json(result.rows[0]);
+    const searchStatus = await syncCourseSearch(result.rows[0].course_id);
+    res.json({ ...result.rows[0], ...searchStatus });
   } catch (error) {
     console.error(
       "Kunde inte redigera kurstillfället:",
@@ -453,8 +456,10 @@ export const deleteCourseSession = async (
       });
     }
 
+    const searchStatus = await syncCourseSearch(result.rows[0].course_id);
     res.json({
       message: "Kurstillfället togs bort.",
+      ...searchStatus,
     });
   } catch (error) {
     console.error(
