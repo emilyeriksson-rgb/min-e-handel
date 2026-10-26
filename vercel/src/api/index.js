@@ -8,12 +8,21 @@ import currencyRoutes from "../../backend/routes/currencyRoutes.js";
 import bookRoutes from "../../backend/routes/bookRoutes.js";
 import catalogRoutes from "../../backend/routes/catalogRoutes.js";
 import searchRoutes from "../../backend/routes/searchRoutes.js";
-import errorHandler from "../../backend/middleware/errorHandler.js";
 import paymentRoutes from "../../backend/routes/paymentRoutes.js";
 import { stripeWebhook } from "../../backend/controllers/paymentController.js";
+import errorHandler from "../../backend/middleware/errorHandler.js";
+
 const app = express();
+
 app.use(cors());
-app.post("/api/payments/webhook", express.raw({ type: "application/json" }), stripeWebhook);
+
+// Signaturkontrollen kräver rå request-body.
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhook
+);
+
 app.use(express.json());
 app.use("/api/payments", paymentRoutes);
 app.use("/api/courses", courseRoutes);
@@ -25,4 +34,5 @@ app.use("/api/books", bookRoutes);
 app.use("/api/catalog", catalogRoutes);
 app.use("/api/search", searchRoutes);
 app.use(errorHandler);
+
 export default app;

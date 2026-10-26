@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { fetchJson } from "../lib/fetchJson.ts";
-import { fetchText } from "../lib/fetchText.ts";
+import { fetchJson } from "../lib/fetchJson.js";
+import { fetchText } from "../lib/fetchText.js";
 import { parse } from "csv-parse/sync";
 import { XMLParser } from "fast-xml-parser";
 
@@ -38,7 +38,7 @@ const SupplierBook = z.object({
   uppdaterad: z.iso.datetime(),
 });
 
-type SupplierBook = z.infer<typeof SupplierBook>;
+                                                 
 
 const SupplierResponse = z.object({
   data: z.array(z.unknown()),
@@ -68,7 +68,7 @@ lagersaldo: SupplierStockText,
   uppdaterad: z.iso.date(),
 });
 
-type SupplierCsvBook = z.infer<typeof SupplierCsvBook>;
+                                                       
 
 const SupplierXmlResponse = z.object({
   katalog: z.object({
@@ -106,19 +106,19 @@ lagersaldo: SupplierStockText,
   uppdaterad: z.iso.datetime(),
 });
 
-type SupplierXmlBook = z.infer<typeof SupplierXmlBook>;
+                                                       
 
-export type Book = {
-  sku: string;
-  title: string;
-  category: string;
-  price: number;
-  stock: number;
-  variants: string[];
-  updatedAt: string;
-};
+                    
+              
+                
+                   
+                
+                
+                     
+                    
+  
 
-function toBook(book: SupplierBook): Book {
+function toBook(book              )       {
   return {
     sku: book.artNr,
     title: book.benamning,
@@ -133,7 +133,7 @@ function toBook(book: SupplierBook): Book {
   };
 }
 
-function csvToBook(row: SupplierCsvBook): Book {
+function csvToBook(row                 )       {
   return {
     sku: row.artNr,
     title: row.benamning,
@@ -150,7 +150,7 @@ function csvToBook(row: SupplierCsvBook): Book {
   };
 }
 
-function xmlToBook(row: SupplierXmlBook): Book {
+function xmlToBook(row                 )       {
   const variants = typeof row.varianter === "string"
     ? []
     : row.varianter.variant;
@@ -190,7 +190,7 @@ async function fetchBookPage(page = 1) {
 }
 
 export async function getBooks() {
-  const books: Book[] = [];
+  const books         = [];
   let skippedCount = 0;
   let totalPages = 1;
 
@@ -227,7 +227,7 @@ export async function getBooks() {
   return { books, skippedCount };
 }
 
-async function fetchBookCsvRows(): Promise<unknown[]> {
+async function fetchBookCsvRows()                     {
   const baseUrl = process.env.SUPPLIER_API_URL;
   const apiKey = process.env.SUPPLIER_API_KEY;
 
@@ -257,8 +257,8 @@ async function fetchBookCsvRows(): Promise<unknown[]> {
 
 export async function getBooksFromCsv() {
   const rows = await fetchBookCsvRows();
-  const books: Book[] = [];
-  const skipped: { sku: string; reason: string }[] = [];
+  const books         = [];
+  const skipped                                    = [];
 
   for (const row of rows) {
     const result = SupplierCsvBook.safeParse(row);
@@ -284,7 +284,7 @@ export async function getBooksFromCsv() {
   return { books, skipped };
 }
 
-async function fetchBookXmlRows(): Promise<unknown[]> {
+async function fetchBookXmlRows()                     {
   const baseUrl = process.env.SUPPLIER_API_URL;
   const apiKey = process.env.SUPPLIER_API_KEY;
 
@@ -317,8 +317,8 @@ async function fetchBookXmlRows(): Promise<unknown[]> {
 
 export async function getBooksFromXml() {
   const rows = await fetchBookXmlRows();
-  const books: Book[] = [];
-  const skipped: { sku: string; reason: string }[] = [];
+  const books         = [];
+  const skipped                                    = [];
 
   for (const row of rows) {
     const result = SupplierXmlBook.safeParse(row);

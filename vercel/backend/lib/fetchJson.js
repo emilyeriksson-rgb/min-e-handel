@@ -1,12 +1,12 @@
-type FetchJsonOptions = {
-  headers?: Record<string, string>;
-  timeoutMs?: number;
-};
+                         
+                                   
+                     
+  
 
 export async function fetchJson(
-  url: string,
-  { headers = {}, timeoutMs = 5000 }: FetchJsonOptions = {},
-): Promise<unknown> {
+  url        ,
+  { headers = {}, timeoutMs = 5000 }                   = {},
+)                   {
   const response = await fetch(url, {
     headers,
     signal: AbortSignal.timeout(timeoutMs),
