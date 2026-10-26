@@ -30,10 +30,15 @@ export async function saveBooksToIndex(books) {
 
   const client = getWriteClient();
 
- const objects = books.map((book) => ({
+const objects = books.map((book) => ({
   ...book,
   objectID: book.sku,
   type: "book",
+  price: Number(book.price),
+  searchPrice: Number(book.price),
+  updatedAt: book.updatedAt instanceof Date
+    ? book.updatedAt.toISOString()
+    : book.updatedAt,
 }));
 
   await client.saveObjects({
@@ -81,9 +86,20 @@ const SearchResponse = z.object({
   nbPages: z.number().int().nonnegative(),
 });
 
-export async function searchBooks({ query, page, pageSize, type = "all",   category = "",
+export async function searchBooks({
+  query,
+  page,
+  pageSize,
+  type = "all",
+  category = "",
+  minPrice,
+  maxPrice,
+  learningFormat = "",
+  studyPace = "",
+  city = "",
+  sort = "relevance",
+}) {
 
- }) {
   const appId = process.env.ALGOLIA_APP_ID;
   const apiKey = process.env.ALGOLIA_SEARCH_API_KEY;
   const indexName = process.env.ALGOLIA_INDEX_NAME;
@@ -114,13 +130,58 @@ if (category !== "") {
   facetFilters.push(`category:${escapedCategory}`);
 }
 
+const hasCourseFilters =
+  learningFormat !== "" ||
+  studyPace !== "" ||
+  city !== "";
+
+if (hasCourseFilters && type !== "course") {
+  facetFilters.push("type:course");
+}
+
+if (learningFormat !== "") {
+  facetFilters.push(`searchFormat:${learningFormat}`);
+}
+
+if (studyPace !== "") {
+  facetFilters.push(`searchPace:${studyPace}`);
+}
+
+if (city !== "") {
+  const escapedCity = city.startsWith("-")
+    ? `\\${city}`
+    : city;
+
+  facetFilters.push(`cities:${escapedCity}`);
+}
+
+const numericFilters = [];
+
+if (minPrice !== undefined) {
+  numericFilters.push(`searchPrice >= ${minPrice}`);
+}
+
+if (maxPrice !== undefined) {
+  numericFilters.push(`searchPrice <= ${maxPrice}`);
+}
+
+const searchIndices = {
+  relevance: indexName,
+  price_asc: `${indexName}_price_asc`,
+  price_desc: `${indexName}_price_desc`,
+};
+if (!Object.hasOwn(searchIndices, sort)) {
+  throw new Error("Ogiltig sortering.");
+}
+
 const raw = await client.searchSingleIndex({
-  indexName,
+  indexName: searchIndices[sort],
   searchParams: {
     query,
     page: page - 1,
     hitsPerPage: pageSize,
     facetFilters,
+    numericFilters,
   },
 });
 
@@ -156,24 +217,39 @@ export async function saveCoursesToIndex(courses) {
 
   const client = getWriteClient();
 
-  const objects = publishedCourses.map((course) => ({
-    objectID: `course-${course.id}`,
-    type: "course",
-    id: course.id,
-    title: course.title,
-    category: course.category ?? "",
-    price: Number(course.price),
-    sale_price: course.sale_price == null
-      ? null
-      : Number(course.sale_price),
-    is_on_sale: course.is_on_sale,
-    short_description: course.short_description ?? "",
-    description: course.description ?? "",
-    image_url: course.image_url ?? null,
-    study_pace: course.study_pace ?? "",
-    learning_format: course.learning_format,
-    cities: course.cities ?? [],
-  }));
+const objects = publishedCourses.map((course) => ({
+  objectID: `course-${course.id}`,
+  type: "course",
+  id: course.id,
+  title: course.title,
+  category: course.category ?? "",
+  price: Number(course.price),
+
+  searchPrice: Number(
+    course.is_on_sale && course.sale_price != null
+      ? course.sale_price
+      : course.price
+  ),
+
+  sale_price: course.sale_price == null
+    ? null
+    : Number(course.sale_price),
+  is_on_sale: course.is_on_sale,
+  short_description: course.short_description ?? "",
+  description: course.description ?? "",
+  image_url: course.image_url ?? null,
+  study_pace: course.study_pace ?? "",
+  learning_format: course.learning_format,
+  searchFormat: String(course.learning_format ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^på plats$/, "onsite"),
+
+  searchPace: String(course.study_pace ?? "")
+    .trim()
+    .toLowerCase(),
+  cities: course.cities ?? [],
+}));
 
   await client.saveObjects({
     indexName,
@@ -204,6 +280,54 @@ export async function removeCourseFromIndex(courseId) {
 
 export async function configureSearchIndex() {
   const indexName = process.env.ALGOLIA_INDEX_NAME;
+  if (!indexName) throw new Error("Algolias indexnamn saknas.");
+
+  const client = getWriteClient();
+  const sharedSettings = {
+    searchableAttributes: [
+      "title", "sku", "category", "short_description", "description", "variants",
+    ],
+    attributesForFaceting: [
+      "filterOnly(type)", "category", "filterOnly(searchFormat)",
+      "filterOnly(searchPace)", "filterOnly(cities)",
+    ],
+    typoTolerance: true,
+  };
+  const replicas = [`${indexName}_price_asc`, `${indexName}_price_desc`];
+  // Keep any existing replicas attached when adding our two price orders.
+  let current = {};
+  try {
+    current = await client.getSettings({ indexName });
+  } catch (error) {
+    if (error.status !== 404) throw error;
+  }
+  const { taskID } = await client.setSettings({
+    indexName,
+    indexSettings: {
+      ...sharedSettings,
+      replicas: [...new Set([...(current.replicas ?? []), ...replicas])],
+    },
+  });
+  await client.waitForTask({ indexName, taskID });
+
+  for (const [position, direction] of ["asc", "desc"].entries()) {
+    const replicaName = replicas[position];
+    const task = await client.setSettings({
+      indexName: replicaName,
+      indexSettings: {
+        ...sharedSettings,
+        ranking: [
+          `${direction}(searchPrice)`, "typo", "geo", "words", "filters",
+          "proximity", "attribute", "exact", "custom",
+        ],
+      },
+    });
+    await client.waitForTask({ indexName: replicaName, taskID: task.taskID });
+  }
+}
+
+export async function removeBookFromIndex(sku) {
+  const indexName = process.env.ALGOLIA_INDEX_NAME;
 
   if (!indexName) {
     throw new Error("Algolias indexnamn saknas.");
@@ -211,11 +335,9 @@ export async function configureSearchIndex() {
 
   const client = getWriteClient();
 
-  const { taskID } = await client.setSettings({
+  const { taskID } = await client.deleteObject({
     indexName,
-    indexSettings: {
-      attributesForFaceting: ["filterOnly(type)", "category"],
-    },
+    objectID: sku,
   });
 
   await client.waitForTask({

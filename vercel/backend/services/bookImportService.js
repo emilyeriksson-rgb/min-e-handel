@@ -3,7 +3,8 @@ import { upsertBook } from "../models/bookModel.js";
 import {
   getBooksFromCsv,
   getBooksFromXml,
-} from "../integrations/bookAdapter.js";
+} from "../integrations/bookAdapter.ts";
+import { saveBooksToIndex } from "../integrations/searchAdapter.js";
 
 export async function importBooks(format) {
   if (format !== "csv" && format !== "xml") {
@@ -33,17 +34,32 @@ export async function importBooks(format) {
     }
 
     await client.query("COMMIT");
-
-    return {
-      created,
-      updated,
-      skippedCount: skipped.length,
-      skipped,
-    };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
   }
+
+  // Databasen är nu sparad och anslutningen är släppt.
+  let searchIndexUpdated = false;
+  let searchIndexWarning = null;
+
+  try {
+    await saveBooksToIndex(books);
+    searchIndexUpdated = true;
+  } catch {
+    searchIndexWarning =
+      "Böckerna har sparats i databasen, men sökindexet kunde inte " +
+      "uppdateras. Försök importera igen.";
+  }
+
+  return {
+    created,
+    updated,
+    skippedCount: skipped.length,
+    skipped,
+    searchIndexUpdated,
+    searchIndexWarning,
+  };
 }

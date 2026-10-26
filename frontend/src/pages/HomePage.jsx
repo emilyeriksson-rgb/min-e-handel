@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchCatalog } from "../api/api.js";
+import { fetchCatalog, searchProducts } from "../api/api.js";
 import BookCard from "../components/BookCard.jsx";
 import CourseCard from "../components/CourseCard.jsx";
 import Loader from "../components/Loader.jsx";
@@ -20,16 +20,13 @@ function getPace(product) {
 function getCategory(product) {
   return String(product.category ?? "").trim();
 }
-function matchesSearch(product, query) {
-  return [product.category, product.title, product.short_description, product.description]
-    .some((text) => String(text ?? "").toLowerCase().includes(query));
-}
 
 function HomePage() {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchText, setSearchText] = useState("");
+  const [sort, setSort] = useState("relevance");
   const [learningFormat, setLearningFormat] = useState("");
   const [studyPace, setStudyPace] = useState("");
   const { currency, rates } = useCurrency();
@@ -37,6 +34,18 @@ function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [productType, setProductType] = useState("all");
+  const [searchResult, setSearchResult] = useState({
+    key: "",
+    products: [],
+    totalHits: 0,
+    totalPages: 0,
+    error: "",
+  });
+
+  const [pagination, setPagination] = useState({
+    filterKey: "",
+    page: 1,
+  });
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -52,7 +61,6 @@ function HomePage() {
     loadProducts();
   }, []);
 
-  const query = searchText.trim().toLowerCase();
   const rate = rates[currency];
   const typeProducts = products.filter(
   (product) => productType === "all" || product.type === productType
@@ -89,9 +97,14 @@ function HomePage() {
   ...new Set(
     typeProducts
       .filter((product) =>
-        getFormat(product) === "onsite" &&
-        matchesSearch(product, query) &&
-        matchesPrice(product) &&
+        (
+          getFormat(product) === "onsite" ||
+          getFormat(product) === "hybrid"
+        ) &&
+        (
+          learningFormat === "" ||
+          getFormat(product) === learningFormat
+        ) &&        matchesPrice(product) &&
         (selectedCategory === "" ||
           getCategory(product) === selectedCategory) &&
         (studyPace === "" ||
@@ -102,23 +115,114 @@ function HomePage() {
   ),
 ].sort((a, b) => a.localeCompare(b, "sv"));
 
-const filteredProducts = typeProducts.filter((product) =>
-  matchesSearch(product, query) &&
-  matchesPrice(product) &&
-  (selectedCategory === "" ||
-    getCategory(product) === selectedCategory) &&
-  (learningFormat === "" ||
-    getFormat(product) === learningFormat) &&
-  (studyPace === "" ||
-    getPace(product) === studyPace) &&
-  (learningFormat !== "onsite" ||
-    selectedCity === "" ||
-    (product.cities ?? []).includes(selectedCity))
-);
+const hasRate = Number.isFinite(rate) && rate > 0;
+
+const filters = {
+  query: searchText.trim(),
+  sort,
+  type: productType,
+  category: selectedCategory,
+  learningFormat,
+  studyPace,
+  city: selectedCity,
+  pageSize: 12,
+};
+
+// Prisreglaget visar vald valuta.
+// Backend tar emot prisgränser i SEK.
+if (currentRange && hasRate) {
+  filters.minPrice =
+    Math.ceil((minPrice / rate) * 100 - 0.000001) / 100;
+
+  filters.maxPrice =
+    Math.floor((maxPrice / rate) * 100 + 0.000001) / 100;
+}
+
+const filterKey = JSON.stringify(filters);
+
+// Varje ändring av söktext eller filter börjar på sida 1.
+const page = pagination.filterKey === filterKey
+  ? pagination.page
+  : 1;
+
+const requestKey = JSON.stringify({
+  ...filters,
+  page,
+});
+
+const isSearching = searchResult.key !== requestKey;
+const isBusy = isLoading || isSearching;
+
+const filteredProducts = isSearching
+  ? []
+  : searchResult.products;
+
+const totalHits = isSearching ? 0 : searchResult.totalHits;
+const totalPages = isSearching ? 0 : searchResult.totalPages;
+
+const displayedError =
+  error || (isSearching ? "" : searchResult.error);
+
+useEffect(() => {
+  const controller = new AbortController();
+  const request = JSON.parse(requestKey);
+
+  const timer = setTimeout(async () => {
+    try {
+      // Ett mycket smalt intervall i en annan valuta kan
+      // sakna priser med hela ören i SEK.
+      const emptyPriceRange =
+        request.minPrice !== undefined &&
+        request.maxPrice !== undefined &&
+        request.minPrice > request.maxPrice;
+
+      const data = emptyPriceRange
+        ? { products: [], totalHits: 0, totalPages: 0 }
+        : await searchProducts({
+            ...request,
+            signal: controller.signal,
+          });
+
+      if (!controller.signal.aborted) {
+        setSearchResult({
+          key: requestKey,
+          products: data.products,
+          totalHits: data.totalHits,
+          totalPages: data.totalPages,
+          error: "",
+        });
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        setSearchResult({
+          key: requestKey,
+          products: [],
+          totalHits: 0,
+          totalPages: 0,
+          error: error.message || "Sökningen misslyckades.",
+        });
+      }
+    }
+  }, 250);
+
+  return () => {
+    clearTimeout(timer);
+    controller.abort();
+  };
+}, [requestKey]);
+
+function changePage(nextPage) {
+  setPagination({
+    filterKey,
+    page: nextPage,
+  });
+}
+
   const formatCounts = { online: 0, onsite: 0, hybrid: 0 };
   const paceCounts = { "eget tempo": 0, heltid: 0, deltid: 0 };
   typeProducts.forEach((product) => {
-    if (!matchesSearch(product, query) || !matchesPrice(product)) return;
+    if (product.type !== "course") return;
+    if (!matchesPrice(product)) return;
     if (selectedCategory !== "" && getCategory(product) !== selectedCategory) return;
     const format = getFormat(product);
     const pace = getPace(product);
@@ -131,6 +235,7 @@ const filteredProducts = typeProducts.filter((product) =>
   });
   function resetFilters() {
     setSearchText("");
+    setSort("relevance");
     setSelectedCategory("");
     setLearningFormat("");
     setStudyPace("");
@@ -240,27 +345,86 @@ function changeProductType(value) {
         </aside>
 
         <div className="catalog-results">
-          {!isLoading && !error && (
+          <div className="catalog-sort">
+            <label htmlFor="catalog-sort">Sortera</label>
+            <select id="catalog-sort" value={sort}
+              onChange={(event) => setSort(event.target.value)}>
+              <option value="relevance">Relevans</option>
+              <option value="price_asc">Pris: lägst först</option>
+              <option value="price_desc">Pris: högst först</option>
+            </select>
+          </div>
+          {!isBusy && !displayedError && (
             <p className="catalog-count" role="status">
-              Visar {filteredProducts.length} av {typeProducts.length} produkter</p>
+              {totalHits} träffar
+              {totalPages > 0 && ` · Sida ${page} av ${totalPages}`}
+            </p>
           )}
-          <section className="course-grid" aria-label="Utbildningar" aria-busy={isLoading}>
-            {isLoading && <div className="catalog-message"><Loader message="Laddar produkter..." /></div>}
-            {!isLoading && error && <p className="catalog-message" role="alert">{error}</p>}
-            {!isLoading && !error && products.length === 0 && (
-              <p className="catalog-message">Det finns inga publicerade produkter just nu.</p>
+
+          <section
+            className="course-grid"
+            aria-label="Kurser och kurslitteratur"
+            aria-busy={isBusy}
+          >
+            {displayedError && (
+              <p className="catalog-message" role="alert">
+                {displayedError}
+              </p>
             )}
-          {!isLoading && !error && filteredProducts.map((product) =>
-            product.type === "book" ? (
-              <BookCard key={`book-${product.sku}`} product={product} />
-            ) : (
-              <CourseCard key={`course-${product.id}`} product={product} />
-            )
-          )}
-            {!isLoading && !error && products.length > 0 && filteredProducts.length === 0 && (
-              <p className="catalog-message" role="status">Inga produkter matchar din sökning och dina filter.</p>
+
+            {isBusy && !displayedError && (
+              <div className="catalog-message">
+                <Loader message="Söker produkter..." />
+              </div>
+            )}
+
+            {!isBusy && !displayedError && filteredProducts.map((product) =>
+              product.type === "book" ? (
+                <BookCard
+                  key={`book-${product.sku}`}
+                  product={product}
+                />
+              ) : (
+                <CourseCard
+                  key={`course-${product.id}`}
+                  product={product}
+                />
+              )
+            )}
+
+            {!isBusy && !displayedError && totalHits === 0 && (
+              <p className="catalog-message" role="status">
+                Inga produkter matchar din sökning och dina filter.
+              </p>
             )}
           </section>
+
+          {!isBusy && !displayedError && totalPages > 1 && (
+            <nav
+              className="catalog-pagination"
+              aria-label="Sökresultatets sidor"
+            >
+              <button
+                type="button"
+                className="btn-style"
+                disabled={page <= 1}
+                onClick={() => changePage(page - 1)}
+              >
+                Föregående
+              </button>
+
+              <span>Sida {page} av {totalPages}</span>
+
+              <button
+                type="button"
+                className="btn-style"
+                disabled={page >= totalPages}
+                onClick={() => changePage(page + 1)}
+              >
+                Nästa
+              </button>
+            </nav>
+          )}
         </div>
       </div>
     </main>

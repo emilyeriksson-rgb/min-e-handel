@@ -51,6 +51,7 @@ const [sessionForm, setSessionForm] =
   useState(emptySessionForm);
 
 const [sessionMessage, setSessionMessage] = useState("");
+const [sessionSearchWarning, setSessionSearchWarning] = useState("");
 const [isSessionSaving, setIsSessionSaving] =
   useState(false);
 
@@ -108,11 +109,13 @@ useEffect(() => {
   setSearchWarning("");
   setSessions([]);
 setSessionMessage("");
+setSessionSearchWarning("");
 };
 
 const handleSelectCourse = (course) => {
   setSessions([]);
 setSessionMessage("");
+setSessionSearchWarning("");
   setSelectedCourse(course);
 
   setCourseForm({
@@ -209,6 +212,7 @@ const handleSessionSubmit = async (event) => {
   try {
     setIsSessionSaving(true);
     setSessionMessage("");
+setSessionSearchWarning("");
     setError("");
 
     const isSelfPaced =
@@ -258,6 +262,9 @@ const handleSessionSubmit = async (event) => {
 
     setSessionForm(emptySessionForm);
     setSessionMessage("The course session has been created.");
+    setSessionSearchWarning(createdSession.searchIndexWarning
+      ? "The session was saved, but the search index could not be updated. Save the course again to retry."
+      : "");
   } catch (error) {
     setError(error.message);
   } finally {
@@ -605,6 +612,7 @@ onClick={() => handleSelectCourse(course)} >
       : "Skapa kurstillfälle"}
   </button>
 
+  {sessionSearchWarning && <p role="alert">{sessionSearchWarning}</p>}
   {sessionMessage && (
     <p role="status">{sessionMessage}</p>
   )}

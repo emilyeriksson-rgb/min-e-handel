@@ -293,16 +293,35 @@ export async function searchProducts({
   query = "",
   type = "all",
   category = "",
+  learningFormat = "",
+  studyPace = "",
+  city = "",
+  sort = "relevance",
+  minPrice,
+  maxPrice,
   page = 1,
+  pageSize = 12,
   signal,
 } = {}) {
   const params = new URLSearchParams({
     q: query,
     type,
-    page: String(page),
-    pageSize: "12",
     category,
+    learningFormat,
+    studyPace,
+    city,
+    sort,
+    page: String(page),
+    pageSize: String(pageSize),
   });
+
+  if (minPrice !== undefined) {
+    params.set("minPrice", String(minPrice));
+  }
+
+  if (maxPrice !== undefined) {
+    params.set("maxPrice", String(maxPrice));
+  }
 
   const response = await fetch(`${API_URL}/search?${params}`, {
     signal,
@@ -325,4 +344,53 @@ export async function fetchCatalog() {
   }
 
   return response.json();
+}
+
+export async function fetchBooks() {
+  const response = await fetch(`${API_URL}/books`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Kunde inte hämta böckerna.");
+  }
+
+  return data.books;
+}
+
+export async function updateBook(sku, book) {
+  const response = await fetch(
+    `${API_URL}/books/${encodeURIComponent(sku)}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(book),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Kunde inte spara boken.");
+  }
+
+  return data;
+}
+
+export async function deleteBook(sku) {
+  const response = await fetch(
+    `${API_URL}/books/${encodeURIComponent(sku)}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Kunde inte ta bort boken.");
+  }
+
+  return data;
 }

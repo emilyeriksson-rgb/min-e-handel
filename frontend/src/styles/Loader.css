@@ -1,3 +1,5 @@
+/* Laddningsindikator. */
+
 .kursrum-loader {
   grid-column: 1 / -1;
   display: grid;
@@ -22,7 +24,7 @@
 
 .kursrum-loader__message {
   margin: 0;
-  color: #52627a;
+  color: var(--color-muted);
   font-size: 0.95rem;
   line-height: 1.5;
 }

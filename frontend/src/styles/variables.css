@@ -1,6 +1,11 @@
-/* Gemensamma färger och mått för butik och administration. */
+/* Designvärden. Kompatibilitetsnamnen längst ner pekar på samma färger. */
+
 :root {
+
+  /* Typsnitt */
   --font-family: "Inter", "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Färgpalett */
   --color-background: #f7f9fc;
   --color-surface: #ffffff;
   --color-text: #17243b;
@@ -13,17 +18,21 @@
   --color-danger: #a12635;
   --color-danger-tint: #fff1f2;
   --color-success: #17624a;
+
+  /* Radier och avstånd */
   --border-radius: 0.75rem;
   --radius-small: 0.5rem;
   --spacing-small: 0.5rem;
   --spacing-medium: 1rem;
   --spacing-large: 2rem;
+
+  /* Skuggor och sidmått */
   --shadow-small: 0 2px 8px rgb(23 36 59 / 4%);
   --shadow-hover: 0 8px 24px rgb(23 36 59 / 8%);
   --content-width: 90rem;
   --page-gutter: clamp(1rem, 4vw, 3rem);
 
-  /* Befintliga variabelnamn behålls för kompatibilitet. */
+  /* Kompatibilitetsnamn för befintliga komponenter */
   --background-color: var(--color-background);
   --text-color: var(--color-text);
   --primary-color: var(--color-primary);

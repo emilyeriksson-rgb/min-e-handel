@@ -13,10 +13,13 @@ import AdminCoursesPage from "./pages/admin/AdminCoursesPage.jsx";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage.jsx";
 import AdminBooksPage from "./pages/admin/AdminBooksPage.jsx";
 
+import OrderConfirmationPage from "./pages/OrderConfirmationPage.jsx";
+
 function App() {
   return (
     <Routes>
       <Route element={<PublicLayout />}>
+        <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
         <Route
           path="/"
           element={<HomePage />}

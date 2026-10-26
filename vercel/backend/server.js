@@ -9,7 +9,11 @@ import locationRoutes from "./routes/locationRoutes.js";
 import currencyRoutes from "./routes/currencyRoutes.js";
 import errorHandler from "./middleware/errorHandler.js";
 import bookRoutes from "./routes/bookRoutes.js";
-import { XMLParser } from "fast-xml-parser";
+import searchRoutes from "./routes/searchRoutes.js";
+import catalogRoutes from "./routes/catalogRoutes.js";
+
+import paymentRoutes from "./routes/paymentRoutes.js";
+import { stripeWebhook } from "./controllers/paymentController.js";
 
 dotenv.config();
 
@@ -17,15 +21,17 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
+app.post("/api/payments/webhook", express.raw({ type: "application/json" }), stripeWebhook);
 app.use(express.json());
+app.use("/api/payments", paymentRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/course-sessions", courseSessionRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/locations", locationRoutes);
 app.use("/api/currency", currencyRoutes);
 app.use("/api/books", bookRoutes);
-
-
+app.use("/api/search", searchRoutes);
+app.use("/api/catalog", catalogRoutes);
 app.get("/", (req, res) => {
   res.json({
     message: "E-handelns API fungerar!",
@@ -51,6 +57,10 @@ app.get("/api/database-test", async (req, res) => {
 
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`Servern körs på http://localhost:${port}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(port, () => {
+    console.log(`Servern körs på http://localhost:${port}`);
+  });
+}
+
+export default app;

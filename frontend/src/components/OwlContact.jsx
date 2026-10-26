@@ -14,7 +14,9 @@ function MailIcon() {
 
 function OwlContact({ email = "", delayMs = 5000 }) {
   const [ready, setReady] = useState(false);
-  const [owlVisible, setOwlVisible] = useState(true);
+  const [owlVisible, setOwlVisible] = useState(
+    () => typeof window !== "undefined" && "IntersectionObserver" in window
+  );
   const [minimized, setMinimized] = useState(false);
   const [closing, setClosing] = useState(false);
   const [openedFromMini, setOpenedFromMini] = useState(false);
@@ -37,10 +39,7 @@ function OwlContact({ email = "", delayMs = 5000 }) {
   useEffect(() => {
     const owl = owlRef.current;
     if (!owl) return;
-    if (!("IntersectionObserver" in window)) {
-      setOwlVisible(false);
-      return;
-    }
+    if (!("IntersectionObserver" in window)) return;
     const observer = new IntersectionObserver(([entry]) => {
       setOwlVisible(entry.isIntersecting && entry.intersectionRatio >= 0.2);
     }, { threshold: [0, 0.2] });

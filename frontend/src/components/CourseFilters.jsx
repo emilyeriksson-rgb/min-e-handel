@@ -36,8 +36,8 @@ function CourseFilters({
           <option value="hybrid" disabled={formatCounts.hybrid === 0}>Hybrid ({formatCounts.hybrid})</option>
         </select>
       </div>
-      {learningFormat === "onsite" && (
-        <div className="filter-field">
+      {(learningFormat === "onsite" || learningFormat === "hybrid") && (
+          <div className="filter-field">
           <label htmlFor="course-city">Ort</label>
           <select
             id="course-city"

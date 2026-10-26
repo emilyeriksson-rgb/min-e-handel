@@ -43,3 +43,73 @@ export async function upsertBook(book, db = pool) {
 
   return "updated";
 }
+
+export async function listBooks() {
+  const result = await pool.query(`
+    SELECT
+      sku,
+      title,
+      category,
+      price,
+      stock,
+      variants,
+      updated_at AS "updatedAt"
+    FROM books
+    ORDER BY title, sku
+  `);
+
+  return result.rows.map((book) => ({
+    ...book,
+    price: Number(book.price),
+  }));
+}
+
+export async function updateBook(sku, book) {
+  const result = await pool.query(
+    `
+      UPDATE books
+      SET
+        title = $2,
+        category = $3,
+        price = $4,
+        stock = $5,
+        variants = $6,
+        updated_at = NOW()
+      WHERE sku = $1
+      RETURNING
+        sku,
+        title,
+        category,
+        price,
+        stock,
+        variants,
+        updated_at AS "updatedAt"
+    `,
+    [
+      sku,
+      book.title,
+      book.category,
+      book.price,
+      book.stock,
+      book.variants,
+    ]
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  return {
+    ...result.rows[0],
+    price: Number(result.rows[0].price),
+  };
+}
+
+export async function deleteBook(sku) {
+  const result = await pool.query(
+    "DELETE FROM books WHERE sku = $1 RETURNING sku",
+    [sku]
+  );
+
+  return result.rows[0] ?? null;
+}
