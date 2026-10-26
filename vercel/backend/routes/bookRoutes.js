@@ -6,7 +6,7 @@ import { listBooks,
 import {
   getBooksFromCsv,
   getBooksFromXml,
-} from "../integrations/bookAdapter.ts";
+} from "../integrations/bookAdapter.js";
 import { z } from "zod";
 import {
   saveBooksToIndex,

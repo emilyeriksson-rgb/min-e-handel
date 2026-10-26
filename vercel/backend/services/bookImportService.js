@@ -3,7 +3,7 @@ import { upsertBook } from "../models/bookModel.js";
 import {
   getBooksFromCsv,
   getBooksFromXml,
-} from "../integrations/bookAdapter.ts";
+} from "../integrations/bookAdapter.js";
 import { saveBooksToIndex } from "../integrations/searchAdapter.js";
 
 export async function importBooks(format) {

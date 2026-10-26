@@ -1,4 +1,4 @@
-import { fetchJson } from "../lib/fetchJson.ts";
+import { fetchJson } from "../lib/fetchJson.js";
 import { z } from "zod";
 
 const FrankfurterRates = z.object({
@@ -8,20 +8,20 @@ const FrankfurterRates = z.object({
   rates: z.record(z.string(), z.number().positive()),
 });
 
-type FrankfurterResponse = z.infer<typeof FrankfurterRates>;
+                                                            
 
-type CurrencyRates = {
-  base: string;
-  date: string;
-  rates: Record<string, number>;
-};
+                      
+               
+               
+                                
+  
 
-let cache: {
-  value: CurrencyRates;
-  expiresAt: number;
-} | null = null;
+let cache   
+                       
+                    
+         = null;
 
-export async function getRates(): Promise<CurrencyRates> {
+export async function getRates()                         {
   const baseUrl = process.env.CURRENCY_API_URL;
   const cacheMs =
   Number(process.env.CURRENCY_CACHE_SECONDS ?? 3600) * 1000;
@@ -53,7 +53,7 @@ if (!result.success) {
 
 const data = result.data;
 
-const value: CurrencyRates = {
+const value                = {
   base: data.base,
   date: data.date,
   rates: {
