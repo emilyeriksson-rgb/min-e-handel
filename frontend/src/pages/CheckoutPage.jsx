@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import useCart from "../hooks/useCart.js";
 import { createOrder } from "../api/api.js";
 import useCurrency from "../hooks/useCurrency.js";
@@ -8,9 +8,11 @@ function CheckoutPage() {
   const {
     cartItems,
     cartTotal,
-    clearCart,
   } = useCart();
   const { currency, rates } = useCurrency();
+  const [searchParams] = useSearchParams();
+  const paymentCancelled = searchParams.get("cancelled") === "1";
+  const submittingRef = useRef(false);
 
   const [billingRecipient, setBillingRecipient] =
     useState({
@@ -49,8 +51,7 @@ function CheckoutPage() {
 
   const [error, setError] = useState("");
 
-  const [createdOrder, setCreatedOrder] =
-    useState(null);
+
 
 const formatPrice = (priceInSek) => {
   const amount = Number(priceInSek);
@@ -111,6 +112,8 @@ const formatPrice = (priceInSek) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
 
     setIsSubmitting(true);
     setError("");
@@ -151,51 +154,31 @@ const formatPrice = (priceInSek) => {
         items,
       });
 
-      setCreatedOrder(result.order);
-      clearCart();
+      if (typeof result.checkout_url !== "string" || !result.checkout_url) {
+        throw new Error("Betalningslänken saknas. Din order kan redan vara skapad. Kontakta oss innan du gör en ny beställning.");
+      }
+
+      const checkoutUrl = new URL(result.checkout_url);
+      if (checkoutUrl.protocol !== "https:" || checkoutUrl.hostname !== "checkout.stripe.com") {
+        throw new Error("En ogiltig betalningslänk returnerades.");
+      }
+
+      window.location.assign(checkoutUrl.href);
     } catch (error) {
-      setError(error.message);
-    } finally {
+      setError(error.message || "Betalningen kunde inte startas. Försök igen senare.");
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };
-
-  if (createdOrder) {
-    return (
-<main className="site-main checkout-page bokad">  
-        <h1>Tack för din bokning!</h1>
-
-        <p>
-          Din order har skapats med ordernummer{" "}
-          <strong>{createdOrder.id}</strong>.
-        </p>
-
-        <p>
-          Fakturanummer:{" "}
-          <strong>
-            {createdOrder.invoice_number}
-          </strong>
-        </p>
-
-        <p>
-          Totalt:{" "}
-          <strong>
-            {formatPrice(createdOrder.total_amount)}
-          </strong>
-        </p>
-
-        <Link to="/courses">
-          Hitta fler utbildningar
-        </Link>
-      </main>
-    );
-  }
 
   if (cartItems.length === 0) {
     return (
 <main className="site-main checkout-page bokad">
           <h1>Slutför bokning</h1>
 
+        {paymentCancelled && (
+          <p role="status">Du har lämnat betalningen. Den tidigare ordern avbryts när betalningssessionen löper ut, om den inte har betalats.</p>
+        )}
         <p>Din varukorg är tom.</p>
 
         <Link to="/courses">
@@ -209,12 +192,15 @@ const formatPrice = (priceInSek) => {
 <main className="site-main checkout-page">     
    <h1>Slutför bokning</h1>
 
-      <form onSubmit={handleSubmit}>
+      {paymentCancelled && (
+        <p role="status">Du har lämnat betalningen. Den tidigare ordern avbryts när betalningssessionen löper ut, om den inte har betalats.</p>
+      )}
+      <form onSubmit={handleSubmit} aria-busy={isSubmitting}>
         <section>
-          <h2>Fakturauppgifter</h2>
+          <h2>Beställaruppgifter</h2>
 
           <label htmlFor="invoice-email">
-            E-post för faktura *
+            Beställarens e-postadress *
           </label>
 
           <input
@@ -245,8 +231,7 @@ const formatPrice = (priceInSek) => {
           </h3>
 
           <p>
-            Fyll i dessa uppgifter vid fakturering
-            till företag.
+            Fyll i dessa uppgifter om du beställer åt ett företag.
           </p>
 
           <label htmlFor="company-name">
@@ -276,7 +261,7 @@ const formatPrice = (priceInSek) => {
           />
 
           <label htmlFor="invoice-address">
-            Fakturaadress
+            Adress
           </label>
 
           <input
@@ -366,7 +351,7 @@ const formatPrice = (priceInSek) => {
                     />
 
                     Samma e-postadress som
-                    fakturamottagaren
+                    beställaren
                   </label>
 
                   <label
@@ -446,7 +431,7 @@ const formatPrice = (priceInSek) => {
 
         <section>
           <h2>Sammanställning</h2>
-          <p>Valutaomräknade priser är ungefärliga. Fakturering sker i SEK.
+          <p>Valutaomräknade priser är ungefärliga. Betalning sker i SEK. Slutbeloppet visas hos Stripe.
           </p>
 
           <p>
@@ -467,8 +452,8 @@ const formatPrice = (priceInSek) => {
             disabled={isSubmitting}
           >
             {isSubmitting
-              ? "Skapar order..."
-              : "Slutför bokningen"}
+              ? "Öppnar betalningen..."
+              : "Gå till betalning"}
           </button>
         </section>
       </form>

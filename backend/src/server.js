@@ -12,13 +12,18 @@ import bookRoutes from "./routes/bookRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
 import catalogRoutes from "./routes/catalogRoutes.js";
 
+import paymentRoutes from "./routes/paymentRoutes.js";
+import { stripeWebhook } from "./controllers/paymentController.js";
+
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
+app.post("/api/payments/webhook", express.raw({ type: "application/json" }), stripeWebhook);
 app.use(express.json());
+app.use("/api/payments", paymentRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/course-sessions", courseSessionRoutes);
 app.use("/api/orders", orderRoutes);

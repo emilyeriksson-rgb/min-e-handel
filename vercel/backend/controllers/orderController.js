@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { createCheckoutSession } from "../integrations/stripeAdapter.js";
 
 const normalizeEmail = (email) =>
   email.trim().toLowerCase();
@@ -329,10 +330,17 @@ return {
   participants,
 };
 
-      return {
-        courseSessionId
-      };
     });
+
+    const sessionIds = preparedItems.map(
+      (item) => item.courseSessionId
+    );
+
+    if (new Set(sessionIds).size !== sessionIds.length) {
+      throw createRequestError(
+        "Samma kurstillfälle får bara finnas på en rad i varukorgen."
+      );
+    }
 
     client = await pool.connect();
 
@@ -417,6 +425,8 @@ return {
             course_sessions.price,
             course_sessions.sale_price,
             course_sessions.is_on_sale,
+            course_sessions.available_seats,
+            courses.is_published,
             courses.title
 
           FROM course_sessions
@@ -440,13 +450,36 @@ return {
       }
 
       const session = sessionResult.rows[0];
+      const quantity = item.participants.length;
+
+      if (!session.is_published) {
+        throw createRequestError(
+          "Den valda utbildningen går inte längre att boka.",
+          409
+        );
+      }
+
+      if (
+        !Number.isInteger(session.available_seats) ||
+        session.available_seats < 0
+      ) {
+        throw createRequestError(
+          "Antalet tillgängliga platser saknas eller är ogiltigt. Kontakta oss.",
+          409
+        );
+      }
+
+      if (quantity > session.available_seats) {
+        throw createRequestError(
+          `Det finns bara ${session.available_seats} platser kvar på ${session.title}.`,
+          409
+        );
+      }
 
       const price =
-        session.is_on_sale && session.sale_price
+        session.is_on_sale && session.sale_price !== null
           ? Number(session.sale_price)
           : Number(session.price);
-
-      const quantity = item.participants.length;
 
       totalAmount += price * quantity;
 
@@ -552,44 +585,49 @@ return {
       }
     }
 
-    const invoiceNumber =
-      `INV-${order.id}-${Date.now()}`;
+await client.query(
+  `
+    INSERT INTO payments (
+      order_id,
+      payment_method,
+      invoice_status
+    )
+    VALUES ($1, 'stripe', 'unpaid')
+  `,
+  [order.id]
+);
 
-    await client.query(
-      `
-        INSERT INTO payments (
-          order_id,
-          payment_method,
-          invoice_number,
-          invoice_status,
-          invoice_due_date
-        )
-        VALUES (
-          $1,
-          'invoice',
-          $2,
-          'unpaid',
-          CURRENT_DATE + 30
-        )
-      `,
-      [order.id, invoiceNumber]
-    );
+// Ordern och dess rader sparas innan Stripe kontaktas.
+await client.query("COMMIT");
+transactionStarted = false;
 
-    await client.query("COMMIT");
-    transactionStarted = false;
+const checkoutSession = await createCheckoutSession({
+  orderId: order.id,
+  items: orderData.map((item) => ({
+    title: item.courseTitle,
+    unitAmount: Math.round(item.price * 100),
+    quantity: item.quantity,
+  })),
+});
 
-    res.status(201).json({
-      message: "Ordern skapades.",
-      order: {
-        id: order.id,
-        billing_recipient_id: billingRecipientId,
-        invoice_email: invoiceEmail,
-        total_amount: order.total_amount,
-        payment_status: order.payment_status,
-        invoice_number: invoiceNumber,
-        items: orderData,
-      },
-    });
+await client.query(
+  `
+    UPDATE orders
+    SET stripe_checkout_session_id = $1
+    WHERE id = $2
+  `,
+  [checkoutSession.id, order.id]
+);
+
+res.status(201).json({
+  message: "Ordern skapades. Fortsätt till betalningen.",
+  checkout_url: checkoutSession.url,
+  order: {
+    id: order.id,
+    total_amount: order.total_amount,
+    payment_status: order.payment_status,
+  },
+});
   } catch (error) {
     if (client && transactionStarted) {
       await client.query("ROLLBACK");
@@ -630,31 +668,25 @@ export const updateInvoiceStatus = async (req, res) => {
   try {
     await client.query("BEGIN");
 
- const paymentResult = await client.query(
-  `UPDATE payments
-   SET
-     invoice_status = $1::VARCHAR,
-     paid_at = CASE
-       WHEN $1::VARCHAR = 'paid'
-         THEN COALESCE(
-           paid_at,
-           CURRENT_TIMESTAMP
-         )
-       WHEN $1::VARCHAR = 'unpaid'
-         THEN NULL
-       ELSE paid_at
-     END
-   WHERE order_id = $2
-   RETURNING *`,
-  [invoiceStatus, id]
-);
-    if (paymentResult.rows.length === 0) {
-      await client.query("ROLLBACK");
-
-      return res.status(404).json({
-        message: "Fakturan hittades inte.",
-      });
-    }
+    const paymentResult = await client.query(
+      `UPDATE payments
+      SET
+        invoice_status = $1::VARCHAR,
+        paid_at = CASE
+          WHEN $1::VARCHAR = 'paid'
+            THEN COALESCE(
+              paid_at,
+              CURRENT_TIMESTAMP
+            )
+          WHEN $1::VARCHAR = 'unpaid'
+            THEN NULL
+          ELSE paid_at
+        END
+      WHERE order_id = $2
+        AND payment_method = 'invoice'
+      RETURNING *`,
+      [invoiceStatus, id]
+    );
 
     await client.query(
       `UPDATE orders
