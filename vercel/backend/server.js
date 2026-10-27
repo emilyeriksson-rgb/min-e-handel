@@ -11,6 +11,7 @@ import errorHandler from "./middleware/errorHandler.js";
 import bookRoutes from "./routes/bookRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
 import catalogRoutes from "./routes/catalogRoutes.js";
+import productImageRoutes from "./routes/productImageRoutes.js";
 
 import paymentRoutes from "./routes/paymentRoutes.js";
 import { stripeWebhook } from "./controllers/paymentController.js";
@@ -32,6 +33,7 @@ app.use("/api/currency", currencyRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/catalog", catalogRoutes);
+app.use("/api/product-images", productImageRoutes);
 app.get("/", (req, res) => {
   res.json({
     message: "E-handelns API fungerar!",

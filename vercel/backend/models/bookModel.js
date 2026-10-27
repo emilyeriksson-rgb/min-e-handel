@@ -53,6 +53,8 @@ export async function listBooks() {
       price,
       stock,
       variants,
+      image_path,
+      image_url,
       updated_at AS "updatedAt"
     FROM books
     ORDER BY title, sku
@@ -83,6 +85,8 @@ export async function updateBook(sku, book) {
         price,
         stock,
         variants,
+        image_path,
+        image_url,
         updated_at AS "updatedAt"
     `,
     [

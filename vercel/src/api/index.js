@@ -8,7 +8,7 @@ import currencyRoutes from "../../backend/routes/currencyRoutes.js";
 import bookRoutes from "../../backend/routes/bookRoutes.js";
 import catalogRoutes from "../../backend/routes/catalogRoutes.js";
 import searchRoutes from "../../backend/routes/searchRoutes.js";
-import paymentRoutes from "../../backend/routes/paymentRoutes.js";
+import productImageRoutes from "../../backend/routes/productImageRoutes.js";
 import { stripeWebhook } from "../../backend/controllers/paymentController.js";
 import errorHandler from "../../backend/middleware/errorHandler.js";
 
@@ -25,6 +25,7 @@ app.post(
 
 app.use(express.json());
 app.use("/api/payments", paymentRoutes);
+app.use("/api/product-images", productImageRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/course-sessions", courseSessionRoutes);
 app.use("/api/orders", orderRoutes);

@@ -8,6 +8,7 @@ import {
   updateCourse,
 } from "../../api/api.js";
 import Loader from "../../components/Loader.jsx";
+import ProductImageUploader from "../../components/admin/ProductImageUploader.jsx";
 
 const emptySessionForm = {
   session_type: "scheduled",
@@ -57,6 +58,7 @@ const [isSessionSaving, setIsSessionSaving] =
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   useEffect(() => {
     const loadAdminData = async () => {
@@ -103,6 +105,7 @@ useEffect(() => {
 }, [selectedCourse]);
 
   const handleNewCourse = () => {
+    if (isSaving || isImageUploading) return;
   setSelectedCourse(null);
   setCourseForm(emptyCourseForm);
   setMessage("");
@@ -110,9 +113,11 @@ useEffect(() => {
   setSessions([]);
 setSessionMessage("");
 setSessionSearchWarning("");
+
 };
 
 const handleSelectCourse = (course) => {
+  if (isSaving || isImageUploading) return;
   setSessions([]);
 setSessionMessage("");
 setSessionSearchWarning("");
@@ -146,8 +151,37 @@ const handleCourseChange = (event) => {
   }));
 };
 
+function handleCourseImageUploaded(result) {
+  const courseId = Number(result.productId);
+
+  const imageFields = {
+    image_path: result.image_path,
+    image_url: result.image_url,
+  };
+
+  setCourses((current) =>
+    current.map((course) =>
+      course.id === courseId
+        ? { ...course, ...imageFields }
+        : course
+    )
+  );
+
+  setSelectedCourse((current) =>
+    current?.id === courseId
+      ? { ...current, ...imageFields }
+      : current
+  );
+
+  setCourseForm((current) => ({
+    ...current,
+    image_url: result.image_url,
+  }));
+}
+
 const handleCourseSubmit = async (event) => {
   event.preventDefault();
+  if (isSaving || isImageUploading) return;
 
   try {
     setIsSaving(true);
@@ -442,15 +476,19 @@ onClick={() => handleSelectCourse(course)} >
   onChange={handleCourseChange}
 />
 
-<label htmlFor="image_url">Bildadress</label>
-<input
-  id="image_url"
-  name="image_url"
-  type="text"
-  placeholder="/img/truckutbildning.webp"
-  value={courseForm.image_url}
-  onChange={handleCourseChange}
-/>
+{selectedCourse ? (
+  <ProductImageUploader
+    key={selectedCourse.id}
+    productType="courses"
+    productId={selectedCourse.id}
+    imageUrl={courseForm.image_url}
+    disabled={isSaving || isSessionSaving}
+    onBusyChange={setIsImageUploading}
+    onUploaded={handleCourseImageUploaded}
+  />
+) : (
+  <p>Save the course before uploading an image.</p>
+)}
 
 <label>
   <input
@@ -463,7 +501,8 @@ onClick={() => handleSelectCourse(course)} >
 </label>
 
   <button type="submit"     className="btn-style"
- disabled={isSaving}>
+ disabled={isSaving || isImageUploading}
+ >
     {isSaving ? "Sparar..." : "Spara utbildning"}
   </button>
 

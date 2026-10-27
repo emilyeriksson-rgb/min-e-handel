@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { importBooks, fetchBooks, updateBook, deleteBook } from "../../api/api.js";
-
+import ProductImageUploader from "../../components/admin/ProductImageUploader.jsx";
 import BookEditDialog from "../../components/admin/BookEditDialog.jsx";
 
 function AdminBooksPage() {
@@ -19,6 +19,7 @@ function AdminBooksPage() {
   const [searchWarning, setSearchWarning] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteResult, setDeleteResult] = useState(null);
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -49,9 +50,15 @@ function AdminBooksPage() {
   }, []);
 
   async function handleImport(format) {
-    setLoadingFormat(format);
-    setError("");
-    setReport(null);
+  if (
+    isSaving ||
+    isDeleting ||
+    isImageUploading ||
+    loadingFormat
+  ) {
+    return;
+  }
+
     setSelectedBook(null);
     setBookForm(null);
     setSaveMessage("");
@@ -180,8 +187,29 @@ async function handleBookSave(event) {
     }
   }
 
+  function handleBookImageUploaded(result) {
+  const imageFields = {
+    image_path: result.image_path,
+    image_url: result.image_url,
+  };
+
+  setBooks((current) =>
+    current.map((book) =>
+      book.sku === result.productId
+        ? { ...book, ...imageFields }
+        : book
+    )
+  );
+
+  setSelectedBook((current) =>
+    current?.sku === result.productId
+      ? { ...current, ...imageFields }
+      : current
+  );
+}
+
   function closeEditor() {
-    if (isSaving || isDeleting) return;
+    if (isSaving || isDeleting || isImageUploading) return;
     setSelectedBook(null);
     setBookForm(null);
   }
@@ -347,6 +375,19 @@ async function handleBookSave(event) {
 
     <fieldset disabled={isSaving || isDeleting || Boolean(loadingFormat)}>
       <legend>Book details</legend>
+      <ProductImageUploader
+  key={selectedBook.sku}
+  productType="books"
+  productId={selectedBook.sku}
+  imageUrl={selectedBook.image_url}
+  disabled={
+    isSaving ||
+    isDeleting ||
+    Boolean(loadingFormat)
+  }
+  onBusyChange={setIsImageUploading}
+  onUploaded={handleBookImageUploaded}
+/>
 
       <label htmlFor="book-title">Title</label>
       <input
