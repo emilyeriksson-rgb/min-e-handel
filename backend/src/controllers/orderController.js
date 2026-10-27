@@ -193,8 +193,14 @@ payments.paid_at
 
 export const updateOrderStatus = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { order_status: orderStatus } = req.body;
+    const id = Number(req.params.id);
+    const orderStatus = req.body?.order_status;
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return res.status(400).json({
+        message: "Invalid order ID.",
+      });
+    }
 
     const allowedStatuses = [
       "new",
@@ -205,30 +211,56 @@ export const updateOrderStatus = async (req, res) => {
 
     if (!allowedStatuses.includes(orderStatus)) {
       return res.status(400).json({
-        message: "Ogiltig orderstatus.",
+        message: "Invalid order status.",
       });
     }
 
     const result = await pool.query(
-      `UPDATE orders
-       SET order_status = $1
-       WHERE id = $2
-       RETURNING *`,
+      `
+        UPDATE orders AS o
+        SET order_status = $1
+        WHERE o.id = $2
+          AND (
+            NOT EXISTS (
+              SELECT 1
+              FROM payments p
+              WHERE p.order_id = o.id
+                AND p.payment_method = 'stripe'
+            )
+            OR (
+              o.payment_status = 'paid'
+              AND $1::TEXT IN ('processing', 'completed')
+            )
+          )
+        RETURNING o.*
+      `,
       [orderStatus, id]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        message: "Ordern hittades inte.",
+    if (result.rowCount === 0) {
+      const existing = await pool.query(
+        "SELECT id FROM orders WHERE id = $1",
+        [id]
+      );
+
+      if (existing.rowCount === 0) {
+        return res.status(404).json({
+          message: "Order not found.",
+        });
+      }
+
+      return res.status(409).json({
+        message:
+          "Unpaid Stripe orders are managed by the payment webhook. Paid Stripe orders can only be set to processing or completed.",
       });
     }
 
-    res.json(result.rows[0]);
+    return res.json(result.rows[0]);
   } catch (error) {
-    console.error("Kunde inte uppdatera orderstatus:", error);
+    console.error("Could not update order status:", error);
 
-    res.status(500).json({
-      message: "Kunde inte uppdatera orderstatus.",
+    return res.status(500).json({
+      message: "Could not update order status.",
     });
   }
 };
@@ -331,6 +363,10 @@ return {
 };
 
     });
+
+    preparedItems.sort(
+      (a, b) => a.courseSessionId - b.courseSessionId
+    );
 
     const sessionIds = preparedItems.map(
       (item) => item.courseSessionId
@@ -437,7 +473,7 @@ return {
 
           WHERE course_sessions.id = $1
 
-          FOR UPDATE
+          FOR UPDATE OF course_sessions
         `,
         [item.courseSessionId]
       );
@@ -469,9 +505,30 @@ return {
         );
       }
 
-      if (quantity > session.available_seats) {
+            const reservationResult = await client.query(
+        `
+          SELECT COALESCE(SUM(oi.quantity), 0)::INTEGER AS reserved
+          FROM order_items oi
+          JOIN orders o ON o.id = oi.order_id
+          JOIN payments p ON p.order_id = o.id
+          WHERE oi.course_session_id = $1
+            AND p.payment_method = 'stripe'
+            AND o.payment_status = 'unpaid'
+            AND o.order_status <> 'cancelled'
+        `,
+        [item.courseSessionId]
+      );
+
+      const reserved = reservationResult.rows[0].reserved;
+
+      const availableToBook = Math.max(
+        0,
+        session.available_seats - reserved
+      );
+
+      if (quantity > availableToBook) {
         throw createRequestError(
-          `Det finns bara ${session.available_seats} platser kvar på ${session.title}.`,
+          `Det finns bara ${availableToBook} bokningsbara platser kvar på ${session.title}.`,
           409
         );
       }
@@ -687,6 +744,15 @@ export const updateInvoiceStatus = async (req, res) => {
       RETURNING *`,
       [invoiceStatus, id]
     );
+
+    if (paymentResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+
+      return res.status(409).json({
+        message:
+          "Invoice status cannot be changed for this order. Stripe payments are updated by webhook only.",
+      });
+    }
 
     await client.query(
       `UPDATE orders
