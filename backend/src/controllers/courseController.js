@@ -184,7 +184,10 @@ export const updateCourse = async (req, res) => {
          is_on_sale = $5,
          short_description = $6,
          description = $7,
-         image_url = $8,
+         image_url = CASE
+            WHEN image_path IS NULL THEN $8
+            ELSE image_url
+          END,
          category = $9,
          study_pace = $10,
          learning_format = $11,

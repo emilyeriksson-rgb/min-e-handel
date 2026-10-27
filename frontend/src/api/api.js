@@ -394,3 +394,41 @@ export async function deleteBook(sku) {
 
   return data;
 }
+
+export async function uploadProductImage({
+  productType,
+  productId,
+  file,
+}) {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const response = await fetch(
+    `${API_URL}/product-images/${productType}/${encodeURIComponent(productId)}`,
+    {
+      method: "POST",
+      body: formData,
+      signal: AbortSignal.timeout(45_000),
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+        "The image could not be uploaded. Please try again."
+    );
+  }
+
+  if (
+    typeof data.image_url !== "string" ||
+    typeof data.image_path !== "string"
+  ) {
+    throw new Error(
+      "The upload response was incomplete. Refresh the product before retrying."
+    );
+  }
+
+  return data;
+}

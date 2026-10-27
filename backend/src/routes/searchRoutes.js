@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { searchBooks } from "../integrations/searchAdapter.js";
+import pool from "../config/db.js";
 
 const router = Router();
 
@@ -66,12 +67,64 @@ router.get("/", async (req, res) => {
   const { q, ...params } = result.data;
 
   try {
-    const response = await searchBooks({
-      query: q,
-      ...params,
-    });
+  const response = await searchBooks({
+  query: q,
+  ...params,
+});
 
-    return res.json(response);
+if (response.products.length > 0) {
+  const bookSkus = response.products
+    .filter((product) => product.type === "book")
+    .map((product) => product.sku);
+
+  const courseIds = response.products
+    .filter((product) => product.type === "course")
+    .map((product) => product.id);
+
+  const imageResult = await pool.query(
+    `
+      SELECT
+        'book' AS type,
+        sku AS product_key,
+        image_url
+      FROM books
+      WHERE sku = ANY($1::TEXT[])
+
+      UNION ALL
+
+      SELECT
+        'course' AS type,
+        id::TEXT AS product_key,
+        image_url
+      FROM courses
+      WHERE id = ANY($2::INTEGER[])
+    `,
+    [bookSkus, courseIds]
+  );
+
+  const images = new Map(
+    imageResult.rows.map((row) => [
+      `${row.type}:${row.product_key}`,
+      row.image_url,
+    ])
+  );
+
+  response.products = response.products.map((product) => {
+    const key = product.type === "book"
+      ? `book:${product.sku}`
+      : `course:${product.id}`;
+
+    return {
+      ...product,
+      image_url: images.has(key)
+        ? images.get(key)
+        : product.image_url ?? null,
+      };
+    });
+  }
+
+  return res.json(response);
+
   } catch {
     return res.status(503).json({
       message:

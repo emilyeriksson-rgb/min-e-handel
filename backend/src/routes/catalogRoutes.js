@@ -32,6 +32,8 @@ router.get("/", async (req, res) => {
           price,
           stock,
           variants,
+          image_path,
+          image_url,
           updated_at AS "updatedAt"
         FROM books
         ORDER BY title

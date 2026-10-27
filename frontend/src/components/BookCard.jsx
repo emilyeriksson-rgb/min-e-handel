@@ -1,7 +1,10 @@
+import { useState } from "react";
 import useCurrency from "../hooks/useCurrency.js";
 
 function BookCard({ product }) {
   const { currency, rates } = useCurrency();
+  const [failedImage, setFailedImage] = useState(null);
+
   const rate = rates[currency];
 
   const formattedPrice = rate === undefined
@@ -11,13 +14,34 @@ function BookCard({ product }) {
         currency,
       });
 
+  const showImage =
+    Boolean(product.image_url) &&
+    failedImage !== product.image_url;
+
   return (
     <article className="course-card book-card">
       <div className="book-card__image">
-        <span className="book-card__badge">Kurslitteratur</span>
-        <span className="book-card__placeholder" aria-hidden="true">
-          📖
+        <span className="book-card__badge">
+          Kurslitteratur
         </span>
+
+        {showImage ? (
+          <img
+            className="book-card__cover"
+            src={product.image_url}
+            alt={`Produktbild för ${product.title}`}
+            loading="lazy"
+            decoding="async"
+            onError={() => setFailedImage(product.image_url)}
+          />
+        ) : (
+          <span
+            className="book-card__placeholder"
+            aria-hidden="true"
+          >
+            📖
+          </span>
+        )}
       </div>
 
       <p className="category">{product.category}</p>
