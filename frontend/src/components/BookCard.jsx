@@ -1,18 +1,53 @@
 import { useState } from "react";
 import useCurrency from "../hooks/useCurrency.js";
+import useCart from "../hooks/useCart.js";
 
 function BookCard({ product }) {
   const { currency, rates } = useCurrency();
+  const { addToCart, cartItems } = useCart();
+
   const [failedImage, setFailedImage] = useState(null);
+
+  const quantityInCart = cartItems.find(
+    (item) =>
+      item.type === "book" &&
+      item.sku === product.sku
+  )?.quantity ?? 0;
+
+  const stock = Number(product.stock);
+
+  const hasValidSku =
+    typeof product.sku === "string" &&
+    product.sku.trim().length > 0;
+
+  const inStock =
+    Number.isInteger(stock) &&
+    stock > 0;
+
+  const maxQuantity = inStock
+    ? Math.min(stock, 99)
+    : 0;
+
+  const limitReached =
+    inStock &&
+    quantityInCart >= maxQuantity;
+
+  const canAdd =
+    hasValidSku &&
+    inStock &&
+    !limitReached;
 
   const rate = rates[currency];
 
   const formattedPrice = rate === undefined
     ? "Valutakurs saknas"
-    : (product.price * rate).toLocaleString("sv-SE", {
-        style: "currency",
-        currency,
-      });
+    : (Number(product.price) * rate).toLocaleString(
+        "sv-SE",
+        {
+          style: "currency",
+          currency,
+        }
+      );
 
   const showImage =
     Boolean(product.image_url) &&
@@ -32,33 +67,49 @@ function BookCard({ product }) {
             alt={`Produktbild för ${product.title}`}
             loading="lazy"
             decoding="async"
-            onError={() => setFailedImage(product.image_url)}
+            onError={() =>
+              setFailedImage(product.image_url)
+            }
           />
         ) : (
           <span
             className="book-card__placeholder"
             aria-hidden="true"
           >
-            📖
+            Bild saknas
           </span>
         )}
       </div>
 
-      <p className="category">{product.category}</p>
-      <h2 className="title">{product.title}</h2>
+      <p className="category">
+        {product.category}
+      </p>
+
+      <h2 className="title">
+        {product.title}
+      </h2>
+
       <strong>{formattedPrice}</strong>
 
+      <div className="book-card-foot">
+
       <p>
-        {product.stock > 0 ? "Finns i lager" : "Slut i lager"}
+        {inStock ? "Finns i lager" : "Slut i lager"}
       </p>
 
       <button
         type="button"
         className="book-card__buy"
-        disabled
+        disabled={!canAdd}
+        onClick={() => addToCart(product)}
       >
-        {product.stock > 0 ? "Köp" : "Slut i lager"}
+        {!inStock
+          ? "Slut i lager"
+          : limitReached
+            ? "Max antal i varukorgen"
+            : "Köp"}
       </button>
+      </div>
     </article>
   );
 }

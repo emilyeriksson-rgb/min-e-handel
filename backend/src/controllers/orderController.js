@@ -1,5 +1,14 @@
 import pool from "../config/db.js";
 import { createCheckoutSession } from "../integrations/stripeAdapter.js";
+import { z } from "zod";
+import {
+  calculateShippingPrice,
+  validateServicePoint,
+} from "../services/shippingService.js";
+import {
+  getEstimatedDelivery,
+  normalizePostalCode,
+} from "../integrations/postnordAdapter.js";
 
 const normalizeEmail = (email) =>
   email.trim().toLowerCase();
@@ -265,6 +274,30 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
+const BookOrderItemsSchema = z.array(
+  z.object({
+    sku: z.string().trim().min(1).max(200),
+    quantity: z.number().int().min(1).max(99),
+  }).strict()
+).max(99);
+
+const ShippingInputSchema = z.object({
+  method: z.enum(["service_point", "home"]),
+
+  address: z.object({
+    name: z.string().trim().min(1).max(200),
+    street: z.string().trim().min(1).max(200),
+    postalCode: z.string().trim()
+      .regex(/^\d{3}\s?\d{2}$/),
+    city: z.string().trim().min(1).max(100),
+  }).strict(),
+
+  servicePointId: z.string().trim()
+    .min(1).max(100).optional(),
+
+  countryCode: z.literal("SE"),
+}).strict();
+
 export const createOrder = async (req, res) => {
   let client;
   let transactionStarted = false;
@@ -272,7 +305,9 @@ export const createOrder = async (req, res) => {
   try {
     const {
       billing_recipient: billingRecipient,
-      items,
+      items = [],
+      books = [],
+      shipping,
     } = req.body;
 
     if (!billingRecipient?.email) {
@@ -291,11 +326,36 @@ export const createOrder = async (req, res) => {
       );
     }
 
-    if (!Array.isArray(items) || items.length === 0) {
-      throw createRequestError(
-        "Ordern måste innehålla minst en utbildning."
-      );
-    }
+   const bookResult = BookOrderItemsSchema.safeParse(books);
+
+if (!Array.isArray(items) || !bookResult.success) {
+  throw createRequestError(
+    "Ordern innehåller ogiltiga produktrader."
+  );
+}
+
+const preparedBooks = bookResult.data;
+
+if (items.length + preparedBooks.length === 0) {
+  throw createRequestError(
+    "Ordern måste innehålla minst en produkt."
+  );
+}
+
+// Högst 99 produktrader, med plats för en fraktrad i Stripe.
+if (items.length + preparedBooks.length > 99) {
+  throw createRequestError(
+    "Ordern innehåller för många produktrader."
+  );
+}
+
+const bookSkus = preparedBooks.map((book) => book.sku);
+
+if (new Set(bookSkus).size !== bookSkus.length) {
+  throw createRequestError(
+    "Samma bok får bara finnas på en rad i varukorgen."
+  );
+}
 
     const preparedItems = items.map((item) => {
       const courseSessionId = Number(
@@ -377,6 +437,59 @@ return {
         "Samma kurstillfälle får bara finnas på en rad i varukorgen."
       );
     }
+
+    let shippingMethod = "none";
+let shippingAddress = null;
+let shippingServicePoint = null;
+let shippingEstimate = null;
+
+if (preparedBooks.length > 0) {
+  const shippingResult = ShippingInputSchema.safeParse(
+    shipping
+  );
+
+  if (!shippingResult.success) {
+    throw createRequestError(
+      "Ange leveransadress och välj ett giltigt fraktalternativ."
+    );
+  }
+
+  const selection = shippingResult.data;
+
+  shippingMethod = selection.method;
+
+  shippingAddress = {
+    ...selection.address,
+    postalCode: normalizePostalCode(
+      selection.address.postalCode
+    ),
+    countryCode: selection.countryCode,
+  };
+
+  if (shippingMethod === "service_point") {
+    shippingServicePoint = await validateServicePoint({
+      postalCode: shippingAddress.postalCode,
+      servicePointId: selection.servicePointId,
+      countryCode: selection.countryCode,
+    });
+  } else if (selection.servicePointId !== undefined) {
+    throw createRequestError(
+      "Ombud ska inte anges vid hemleverans."
+    );
+  }
+
+  shippingEstimate = await getEstimatedDelivery({
+    postalCode: shippingAddress.postalCode,
+    method: shippingMethod,
+  });
+
+  if (!shippingEstimate.available) {
+    throw createRequestError(
+      "Leveranstiden kunde inte beräknas för ditt fraktalternativ. Försök igen senare.",
+      503
+    );
+  }
+}
 
     client = await pool.connect();
 
@@ -549,18 +662,151 @@ return {
       });
     }
 
-    const orderResult = await client.query(
-      `
-        INSERT INTO orders (
-          billing_recipient_id,
-          total_amount,
-          payment_status
-        )
-        VALUES ($1, $2, 'unpaid')
-        RETURNING *
-      `,
-      [billingRecipientId, totalAmount]
+    const bookOrderData = [];
+let bookSubtotalOre = 0;
+
+if (preparedBooks.length > 0) {
+  // Samma låsordning som webhooken: stigande bok-ID.
+  const bookRows = await client.query(
+    `SELECT id, sku, title, price, stock
+     FROM books
+     WHERE sku = ANY($1::TEXT[])
+     ORDER BY id
+     FOR UPDATE`,
+    [bookSkus]
+  );
+
+  if (bookRows.rows.length !== preparedBooks.length) {
+    throw createRequestError(
+      "En eller flera böcker finns inte längre.",
+      409
     );
+  }
+
+  const quantities = new Map(
+    preparedBooks.map((book) => [
+      book.sku,
+      book.quantity,
+    ])
+  );
+
+  for (const book of bookRows.rows) {
+    const quantity = quantities.get(book.sku);
+
+    const reservationResult = await client.query(
+      `SELECT COALESCE(SUM(obi.quantity), 0) AS reserved
+       FROM order_book_items obi
+       JOIN orders o ON o.id = obi.order_id
+       JOIN payments p ON p.order_id = o.id
+       WHERE obi.book_id = $1
+         AND p.payment_method = 'stripe'
+         AND o.payment_status = 'unpaid'
+         AND o.order_status <> 'cancelled'`,
+      [book.id]
+    );
+
+    const reserved = Number(
+      reservationResult.rows[0].reserved
+    );
+
+    if (
+      !Number.isSafeInteger(reserved) ||
+      !Number.isInteger(book.stock) ||
+      book.stock < 0
+    ) {
+      throw new Error("Invalid book stock or reservations");
+    }
+
+    const available = Math.max(
+      0,
+      book.stock - reserved
+    );
+
+    if (quantity > available) {
+      throw createRequestError(
+        `Det finns bara ${available} exemplar kvar av ${book.title}.`,
+        409
+      );
+    }
+
+    const unitAmount = Math.round(
+      Number(book.price) * 100
+    );
+
+    if (
+      !Number.isSafeInteger(unitAmount) ||
+      unitAmount < 0
+    ) {
+      throw new Error("Invalid database book price");
+    }
+
+    bookSubtotalOre += unitAmount * quantity;
+
+    bookOrderData.push({
+      bookId: book.id,
+      sku: book.sku,
+      title: book.title,
+      unitAmount,
+      quantity,
+    });
+  }
+}
+
+const shippingPriceOre = calculateShippingPrice({
+  method: shippingMethod,
+  bookSubtotalOre,
+  hasBooks: preparedBooks.length > 0,
+});
+
+const totalOre =
+  Math.round(totalAmount * 100) +
+  bookSubtotalOre +
+  shippingPriceOre;
+
+if (
+  !Number.isSafeInteger(totalOre) ||
+  totalOre < 300 ||
+  totalOre > 99999999
+) {
+  throw createRequestError(
+    "Orderbeloppet måste vara mellan 3 och 999 999,99 kronor."
+  );
+}
+
+totalAmount = totalOre / 100;
+
+const orderResult = await client.query(
+    `INSERT INTO orders (
+      billing_recipient_id,
+      total_amount,
+      payment_status,
+      shipping_method,
+      shipping_price,
+      shipping_address,
+      shipping_service_point,
+      shipping_estimate
+    )
+    VALUES (
+      $1, $2, 'unpaid',
+      $3, $4, $5::JSONB, $6::JSONB, $7::JSONB
+    )
+    RETURNING *`,
+    [
+      billingRecipientId,
+      totalAmount,
+      shippingMethod,
+      shippingPriceOre / 100,
+      shippingAddress
+        ? JSON.stringify(shippingAddress)
+        : null,
+      shippingServicePoint
+        ? JSON.stringify(shippingServicePoint)
+        : null,
+      shippingEstimate
+        ? JSON.stringify(shippingEstimate)
+        : null,
+    ]
+  );
 
     const order = orderResult.rows[0];
 
@@ -653,18 +899,58 @@ await client.query(
   `,
   [order.id]
 );
+for (const book of bookOrderData) {
+  await client.query(
+    `INSERT INTO order_book_items (
+       order_id,
+       book_id,
+       book_sku,
+       book_title,
+       price_at_purchase,
+       quantity
+     )
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [
+      order.id,
+      book.bookId,
+      book.sku,
+      book.title,
+      book.unitAmount / 100,
+      book.quantity,
+    ]
+  );
+}
 
-// Ordern och dess rader sparas innan Stripe kontaktas.
 await client.query("COMMIT");
 transactionStarted = false;
 
-const checkoutSession = await createCheckoutSession({
-  orderId: order.id,
-  items: orderData.map((item) => ({
+const stripeItems = [
+  ...orderData.map((item) => ({
     title: item.courseTitle,
     unitAmount: Math.round(item.price * 100),
     quantity: item.quantity,
   })),
+
+  ...bookOrderData.map((book) => ({
+    title: book.title,
+    unitAmount: book.unitAmount,
+    quantity: book.quantity,
+  })),
+];
+
+if (preparedBooks.length > 0) {
+  stripeItems.push({
+    title: shippingMethod === "service_point"
+      ? "Frakt – ombud"
+      : "Frakt – hemleverans",
+    unitAmount: shippingPriceOre,
+    quantity: 1,
+  });
+}
+
+const checkoutSession = await createCheckoutSession({
+  orderId: order.id,
+  items: stripeItems,
 });
 
 await client.query(
