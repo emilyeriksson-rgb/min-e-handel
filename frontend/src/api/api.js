@@ -432,3 +432,62 @@ export async function uploadProductImage({
 
   return data;
 }
+
+async function shippingRequest(
+  path,
+  { method = "GET", body, signal } = {}
+) {
+  const timeoutSignal = AbortSignal.timeout(20000);
+
+  const response = await fetch(`${API_URL}/shipping${path}`, {
+    method,
+    headers: body
+      ? { "Content-Type": "application/json" }
+      : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+    signal: signal
+      ? AbortSignal.any([signal, timeoutSignal])
+      : timeoutSignal,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Kunde inte hämta leveransuppgifterna."
+    );
+  }
+
+  return data;
+}
+
+export function fetchShippingQuote(body, signal) {
+  return shippingRequest("/quote", {
+    method: "POST",
+    body,
+    signal,
+  });
+}
+
+export function fetchServicePoints(postalCode, signal) {
+  const query = new URLSearchParams({ postalCode });
+
+  return shippingRequest(`/service-points?${query}`, {
+    signal,
+  });
+}
+
+export function fetchDeliveryEstimate(
+  postalCode,
+  method,
+  signal
+) {
+  const query = new URLSearchParams({
+    postalCode,
+    method,
+  });
+
+  return shippingRequest(`/delivery-estimate?${query}`, {
+    signal,
+  });
+}

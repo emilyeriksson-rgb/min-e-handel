@@ -131,3 +131,10 @@
 .book-card__badge {
   z-index: 1;
 }
+
+.book-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 1.5rem 0.75rem;
+}

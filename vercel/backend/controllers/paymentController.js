@@ -42,7 +42,22 @@ export async function stripeWebhook(req, res) {
           `SELECT course_session_id, SUM(quantity)::integer AS quantity
            FROM order_items WHERE order_id = $1 GROUP BY course_session_id ORDER BY course_session_id`, [order.id]
         );
-        if (!items.rows.length) throw new Error("Empty order");
+
+        const bookItems = await client.query(
+          `SELECT
+            book_id,
+            SUM(quantity)::integer AS quantity
+          FROM order_book_items
+          WHERE order_id = $1
+          GROUP BY book_id
+          ORDER BY book_id`,
+          [order.id]
+        );
+
+        if (!items.rows.length && !bookItems.rows.length) {
+          throw new Error("Empty order");
+        }
+
         for (const item of items.rows) {
           if (!Number.isInteger(item.quantity) || item.quantity <= 0) throw new Error("Invalid quantity");
           const stock = await client.query(
@@ -56,6 +71,33 @@ export async function stripeWebhook(req, res) {
           `UPDATE orders SET payment_status = 'paid', order_status = 'processing',
            stripe_checkout_session_id = $1 WHERE id = $2`, [session.id, order.id]
         );
+
+        for (const item of bookItems.rows) {
+  if (
+    !Number.isInteger(item.book_id) ||
+    !Number.isInteger(item.quantity) ||
+    item.quantity <= 0
+  ) {
+    throw new Error("Invalid or deleted book in paid order");
+  }
+
+  const stock = await client.query(
+    `UPDATE books
+     SET
+       stock = stock - $1,
+       updated_at = NOW()
+     WHERE id = $2
+       AND stock >= $1
+     RETURNING id`,
+    [item.quantity, item.book_id]
+  );
+
+  if (!stock.rowCount) {
+    throw new Error(
+      "Insufficient book stock during payment confirmation"
+    );
+  }
+}
         await client.query(
           `UPDATE payments SET paid_at = COALESCE(paid_at, NOW()), invoice_status = 'paid'
            WHERE order_id = $1 AND payment_method = 'stripe'`, [order.id]
@@ -88,12 +130,43 @@ export async function getPaymentConfirmation(req, res) {
   }
   try {
     const result = await pool.query(
-      `SELECT id, total_amount, payment_status, order_status FROM orders WHERE stripe_checkout_session_id = $1`, [sessionId]
-    );
+          `SELECT
+        id,
+        total_amount,
+        payment_status,
+        order_status,
+        shipping_method,
+        shipping_price,
+        shipping_address,
+        shipping_service_point,
+        shipping_estimate
+      FROM orders
+      WHERE stripe_checkout_session_id = $1`
+      );
     if (!result.rows.length) return res.status(404).json({ message: "Ordern är inte tillgänglig ännu. Vänta ett ögonblick." });
     const order = result.rows[0];
     const items = await pool.query(
-      `SELECT course_title AS title, price_at_purchase, quantity FROM order_items WHERE order_id = $1 ORDER BY id`, [order.id]
+        `SELECT
+      'course' AS product_type,
+      id,
+      course_title AS title,
+      price_at_purchase,
+      quantity
+    FROM order_items
+    WHERE order_id = $1
+
+    UNION ALL
+
+    SELECT
+      'book' AS product_type,
+      id,
+      book_title AS title,
+      price_at_purchase,
+      quantity
+    FROM order_book_items
+    WHERE order_id = $1
+
+    ORDER BY product_type, id`
     );
     return res.json({ ...order, items: items.rows });
   } catch {

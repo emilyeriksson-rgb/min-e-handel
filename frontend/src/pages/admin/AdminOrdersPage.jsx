@@ -9,6 +9,12 @@ const orderStatusLabels = {
   cancelled: "Cancelled",
 };
 
+const shippingMethodLabels = {
+  none: "No shipping required",
+  service_point: "Service point",
+  home: "Home delivery",
+};
+
 function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -368,6 +374,108 @@ const handleCloseOrder = () => {
         ))}
       </article>
     ))}
+
+    {(selectedOrder.book_items ?? []).length > 0 && (
+  <>
+    <h3>Books</h3>
+
+    {selectedOrder.book_items.map((book) => (
+      <article key={`book-${book.id}`}>
+        <h4>{book.book_title}</h4>
+
+        <p>SKU: {book.book_sku}</p>
+
+        <p>
+          Price: {formatPrice(book.price_at_purchase)}
+        </p>
+
+        <p>Quantity: {book.quantity}</p>
+
+        <p>
+          Subtotal:{" "}
+          {formatPrice(
+            Number(book.price_at_purchase) * book.quantity
+          )}
+        </p>
+      </article>
+    ))}
+  </>
+)}
+
+<h3>Shipping</h3>
+
+<p>
+  Method:{" "}
+  {shippingMethodLabels[selectedOrder.shipping_method] ??
+    selectedOrder.shipping_method ??
+    "No shipping required"}
+</p>
+
+<p>
+  Shipping cost:{" "}
+  {formatPrice(selectedOrder.shipping_price ?? 0)}
+</p>
+
+{selectedOrder.shipping_address && (
+  <>
+    <h4>Delivery address</h4>
+
+    <p>{selectedOrder.shipping_address.name}</p>
+    <p>{selectedOrder.shipping_address.street}</p>
+
+    <p>
+      {selectedOrder.shipping_address.postalCode}{" "}
+      {selectedOrder.shipping_address.city}
+    </p>
+
+    <p>{selectedOrder.shipping_address.countryCode}</p>
+  </>
+)}
+
+{selectedOrder.shipping_service_point && (
+  <>
+    <h4>Selected service point</h4>
+
+    <p>
+      {selectedOrder.shipping_service_point.name}
+    </p>
+
+    <p>
+      {selectedOrder.shipping_service_point.address}
+    </p>
+
+    <p>
+      {selectedOrder.shipping_service_point.postalCode}{" "}
+      {selectedOrder.shipping_service_point.city}
+    </p>
+
+    <p>
+      Service point ID:{" "}
+      {selectedOrder.shipping_service_point.countryCode}
+      {":"}
+      {selectedOrder.shipping_service_point.id}
+    </p>
+  </>
+)}
+
+{selectedOrder.shipping_estimate?.available && (
+  <p>
+    Estimated delivery:{" "}
+    {selectedOrder.shipping_estimate.arrivalDate
+      ? new Date(
+          `${selectedOrder.shipping_estimate.arrivalDate}T12:00:00Z`
+        ).toLocaleDateString("en-GB", {
+          weekday: "long",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+          timeZone: "Europe/Stockholm",
+        })
+      : selectedOrder.shipping_estimate.dayRange
+        ? `${selectedOrder.shipping_estimate.dayRange.min}–${selectedOrder.shipping_estimate.dayRange.max} days`
+        : "Unavailable"}
+  </p>
+)}
 
     <p>
       Total:{" "}

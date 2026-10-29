@@ -297,7 +297,8 @@
   margin-block: 0 1rem;
 }
 
-.product-type-filters button {
+.product-type-filters button,
+.book-card__buy  {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -310,7 +311,8 @@
   font-weight: 600;
 }
 
-.product-type-filters button:hover {
+.product-type-filters button:hover,
+.book-card__buy:hover:not(:disabled) {
   background: var(--shop-accent);
   border-color: var(--shop-primary);
 }
@@ -326,7 +328,8 @@
   border-color: var(--shop-primary-dark);
 }
 
-.product-type-filters button:focus-visible {
+.product-type-filters button:focus-visible,
+.book-card__buy:focus-visible {
   outline: 3px solid var(--shop-primary);
   outline-offset: 3px;
 }
