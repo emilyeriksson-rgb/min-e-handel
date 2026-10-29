@@ -15,11 +15,12 @@ import productImageRoutes from "./routes/productImageRoutes.js";
 
 import paymentRoutes from "./routes/paymentRoutes.js";
 import { stripeWebhook } from "./controllers/paymentController.js";
+import shippingRoutes from "./routes/shippingRoutes.js";
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 app.use(cors());
 app.post("/api/payments/webhook", express.raw({ type: "application/json" }), stripeWebhook);
@@ -34,6 +35,7 @@ app.use("/api/books", bookRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/catalog", catalogRoutes);
 app.use("/api/product-images", productImageRoutes);
+app.use("/api/shipping", shippingRoutes);
 app.get("/", (req, res) => {
   res.json({
     message: "E-handelns API fungerar!",

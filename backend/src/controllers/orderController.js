@@ -36,6 +36,11 @@ export const getAllOrders = async (req, res) => {
     orders.payment_status,
     orders.order_status,
     orders.created_at,
+    orders.shipping_method,
+    orders.shipping_price,
+    orders.shipping_address,
+    orders.shipping_service_point,
+    orders.shipping_estimate,
 
     billing_recipients.id AS billing_recipient_id,
     billing_recipients.email AS invoice_email,
@@ -187,10 +192,25 @@ payments.paid_at
       [id]
     );
 
+    const booksResult = await pool.query(
+      `SELECT
+        id,
+        book_sku,
+        book_title,
+        price_at_purchase,
+        quantity
+      FROM order_book_items
+      WHERE order_id = $1
+      ORDER BY id`,
+      [id]
+    );
+
     res.json({
       ...orderResult.rows[0],
       items: itemsResult.rows,
+      book_items: booksResult.rows,
     });
+
   } catch (error) {
     console.error("Kunde inte hämta ordern:", error);
 

@@ -1,5 +1,8 @@
 import { Router } from "express";
 import {
+  getShippingQuote,
+} from "../controllers/shippingController.js";
+import {
   getNearestServicePoints,
   getEstimatedDelivery,
 } from "../integrations/postnordAdapter.js";
@@ -54,5 +57,7 @@ async function getDeliveryEstimate(req, res) {
 }
 
 router.get("/delivery-estimate", getDeliveryEstimate);
+
+router.post("/quote", getShippingQuote);
 
 export default router;

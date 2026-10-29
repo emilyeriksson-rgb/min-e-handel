@@ -12,6 +12,7 @@ import paymentRoutes from "../../backend/routes/paymentRoutes.js";
 import productImageRoutes from "../../backend/routes/productImageRoutes.js";
 import { stripeWebhook } from "../../backend/controllers/paymentController.js";
 import errorHandler from "../../backend/middleware/errorHandler.js";
+import shippingRoutes from "../../backend/routes/shippingRoutes.js";
 
 const app = express();
 
@@ -36,5 +37,6 @@ app.use("/api/books", bookRoutes);
 app.use("/api/catalog", catalogRoutes);
 app.use("/api/search", searchRoutes);
 app.use(errorHandler);
+app.use("/api/shipping", shippingRoutes);
 
 export default app;
