@@ -141,7 +141,8 @@ export async function getPaymentConfirmation(req, res) {
         shipping_service_point,
         shipping_estimate
       FROM orders
-      WHERE stripe_checkout_session_id = $1`
+      WHERE stripe_checkout_session_id = $1`,
+      [sessionId]
       );
     if (!result.rows.length) return res.status(404).json({ message: "Ordern är inte tillgänglig ännu. Vänta ett ögonblick." });
     const order = result.rows[0];
@@ -166,7 +167,8 @@ export async function getPaymentConfirmation(req, res) {
     FROM order_book_items
     WHERE order_id = $1
 
-    ORDER BY product_type, id`
+    ORDER BY product_type, id`,
+    [order.id]
     );
     return res.json({ ...order, items: items.rows });
   } catch {
