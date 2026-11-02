@@ -3,7 +3,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 
 export const fetchProducts = async () => {
-  const response = await fetch(`${API_URL}/courses`);
+  const response = await apiFetch(`${API_URL}/courses`);
 
 if (!response.ok) {
     throw new Error('Kunde inte hämta produkter');
@@ -14,7 +14,7 @@ if (!response.ok) {
 
 
 export const fetchProductById = async (id) => {
-  const response = await fetch(`${API_URL}/courses/${id}`);
+  const response = await apiFetch(`${API_URL}/courses/${id}`);
 
   if (response.status === 404) {
     throw new Error("Kursen hittades inte");
@@ -30,7 +30,7 @@ export const fetchProductById = async (id) => {
 
 
 export const fetchCourseSessions = async (courseId) => {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/courses/${courseId}/sessions`
   );
 
@@ -42,7 +42,7 @@ export const fetchCourseSessions = async (courseId) => {
 };
 
 export const createOrder = async (orderData) => {
-  const response = await fetch(`${API_URL}/orders`, {
+  const response = await apiFetch(`${API_URL}/orders`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -62,7 +62,7 @@ export const createOrder = async (orderData) => {
 };
 
 export const createCourse = async (courseData) => {
-  const response = await fetch(`${API_URL}/courses`, {
+  const response = await apiFetch(`${API_URL}/courses`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -85,7 +85,7 @@ export const updateCourse = async (
   courseId,
   courseData
 ) => {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/courses/${courseId}`,
     {
       method: "PUT",
@@ -109,7 +109,7 @@ export const updateCourse = async (
 
 
 export const fetchLocations = async () => {
-  const response = await fetch(`${API_URL}/locations`);
+  const response = await apiFetch(`${API_URL}/locations`);
 
   if (!response.ok) {
     throw new Error("Kunde inte hämta platser.");
@@ -119,7 +119,7 @@ export const fetchLocations = async () => {
 };
 
 export const createLocation = async (location) => {
-  const response = await fetch(`${API_URL}/locations`, {
+  const response = await apiFetch(`${API_URL}/locations`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -142,7 +142,7 @@ export const createCourseSession = async (
   courseId,
   sessionData
 ) => {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/courses/${courseId}/sessions`,
     {
       method: "POST",
@@ -165,7 +165,7 @@ export const createCourseSession = async (
 };
 
 export const fetchOrders = async () => {
-  const response = await fetch(`${API_URL}/orders`);
+  const response = await apiFetch(`${API_URL}/orders`);
 
   if (!response.ok) {
     throw new Error("Kunde inte hämta ordrar.");
@@ -175,7 +175,7 @@ export const fetchOrders = async () => {
 };
 
 export const fetchOrderById = async (orderId) => {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/orders/${orderId}`
   );
 
@@ -190,7 +190,7 @@ export const updateOrderStatus = async (
   orderId,
   orderStatus
 ) => {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/orders/${orderId}/status`,
     {
       method: "PATCH",
@@ -218,7 +218,7 @@ export const updateInvoiceStatus = async (
   orderId,
   invoiceStatus
 ) => {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/orders/${orderId}/invoice-status`,
     {
       method: "PATCH",
@@ -244,7 +244,7 @@ export const updateInvoiceStatus = async (
 };
 
 export const fetchCurrencyRates = async () => {
-  const response = await fetch(`${API_URL}/currency`);
+  const response = await apiFetch(`${API_URL}/currency`);
 
   if (!response.ok) {
     throw new Error("Kunde inte hämta valutakurser.");
@@ -254,7 +254,7 @@ export const fetchCurrencyRates = async () => {
 };
 
 export const importBooks = async (format) => {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/books/import/${format}`,
     {
       method: "POST",
@@ -279,7 +279,7 @@ export async function searchBooks(query, page = 1) {
     pageSize: "10",
   });
 
-  const response = await fetch(`${API_URL}/search?${params}`);
+  const response = await apiFetch(`${API_URL}/search?${params}`);
   const data = await response.json();
 
   if (!response.ok) {
@@ -323,7 +323,7 @@ export async function searchProducts({
     params.set("maxPrice", String(maxPrice));
   }
 
-  const response = await fetch(`${API_URL}/search?${params}`, {
+  const response = await apiFetch(`${API_URL}/search?${params}`, {
     signal,
   });
 
@@ -337,7 +337,7 @@ export async function searchProducts({
 }
 
 export async function fetchCatalog() {
-  const response = await fetch(`${API_URL}/catalog`);
+  const response = await apiFetch(`${API_URL}/catalog`);
 
   if (!response.ok) {
     throw new Error("Kunde inte hämta kurser och kurslitteratur.");
@@ -347,7 +347,7 @@ export async function fetchCatalog() {
 }
 
 export async function fetchBooks() {
-  const response = await fetch(`${API_URL}/books`);
+  const response = await apiFetch(`${API_URL}/books`);
   const data = await response.json();
 
   if (!response.ok) {
@@ -358,7 +358,7 @@ export async function fetchBooks() {
 }
 
 export async function updateBook(sku, book) {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/books/${encodeURIComponent(sku)}`,
     {
       method: "PUT",
@@ -379,7 +379,7 @@ export async function updateBook(sku, book) {
 }
 
 export async function deleteBook(sku) {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/books/${encodeURIComponent(sku)}`,
     {
       method: "DELETE",
@@ -403,7 +403,7 @@ export async function uploadProductImage({
   const formData = new FormData();
   formData.append("image", file);
 
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/product-images/${productType}/${encodeURIComponent(productId)}`,
     {
       method: "POST",
@@ -439,7 +439,7 @@ async function shippingRequest(
 ) {
   const timeoutSignal = AbortSignal.timeout(20000);
 
-  const response = await fetch(`${API_URL}/shipping${path}`, {
+  const response = await apiFetch(`${API_URL}/shipping${path}`, {
     method,
     headers: body
       ? { "Content-Type": "application/json" }
@@ -490,4 +490,109 @@ export function fetchDeliveryEstimate(
   return shippingRequest(`/delivery-estimate?${query}`, {
     signal,
   });
+}
+
+function apiFetch(url, options = {}) {
+  return fetch(url, {
+    ...options,
+    credentials: "include",
+  });
+}
+
+async function authRequest(
+  path,
+  { method = "GET", body, signal } = {}
+) {
+  const timeoutSignal = AbortSignal.timeout(20000);
+
+  const response = await apiFetch(`${API_URL}/auth${path}`, {
+    method,
+    headers: body
+      ? { "Content-Type": "application/json" }
+      : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+    cache: "no-store",
+    signal: signal
+      ? AbortSignal.any([signal, timeoutSignal])
+      : timeoutSignal,
+  });
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const error = new Error(
+      data?.message || "Anropet kunde inte genomföras."
+    );
+
+    error.status = response.status;
+    error.code = data?.code;
+
+    throw error;
+  }
+
+  return data;
+}
+
+export function registerUser(input) {
+  return authRequest("/register", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export function loginUser(input) {
+  return authRequest("/login", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export function logoutUser() {
+  return authRequest("/logout", {
+    method: "POST",
+  });
+}
+
+export async function fetchCurrentUser(signal) {
+  try {
+    const data = await authRequest("/me", { signal });
+    return data.user;
+  } catch (error) {
+    if (error.status === 401) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+export async function fetchMyOrders(signal) {
+  const timeoutSignal = AbortSignal.timeout(20000);
+
+  const response = await apiFetch(`${API_URL}/orders/mine`, {
+    cache: "no-store",
+    signal: signal
+      ? AbortSignal.any([signal, timeoutSignal])
+      : timeoutSignal,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      response.status === 401
+        ? "Din inloggning har gått ut. Logga in igen."
+        : data.message || "Kunde inte hämta dina beställningar."
+    );
+  }
+
+  if (!Array.isArray(data.orders)) {
+    throw new Error("Orderlistan kunde inte läsas.");
+  }
+
+  return data.orders;
 }

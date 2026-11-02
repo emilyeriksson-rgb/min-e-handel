@@ -318,6 +318,38 @@ const ShippingInputSchema = z.object({
   countryCode: z.literal("SE"),
 }).strict();
 
+export const getMyOrders = async (req, res) => {
+  res.set("Cache-Control", "no-store");
+
+  try {
+    const result = await pool.query(
+      `SELECT
+         id,
+         created_at,
+         total_amount,
+         payment_status,
+         order_status,
+         shipping_method,
+         shipping_price,
+         shipping_service_point,
+         shipping_estimate
+       FROM orders
+       WHERE user_id = $1
+       ORDER BY created_at DESC, id DESC
+       LIMIT 50`,
+      [req.user.id]
+    );
+
+    return res.json({
+      orders: result.rows,
+    });
+  } catch {
+    return res.status(500).json({
+      message: "Kunde inte hämta dina beställningar.",
+    });
+  }
+};
+
 export const createOrder = async (req, res) => {
   let client;
   let transactionStarted = false;
@@ -796,37 +828,39 @@ if (
 totalAmount = totalOre / 100;
 
 const orderResult = await client.query(
-    `INSERT INTO orders (
-      billing_recipient_id,
-      total_amount,
-      payment_status,
-      shipping_method,
-      shipping_price,
-      shipping_address,
-      shipping_service_point,
-      shipping_estimate
-    )
-    VALUES (
-      $1, $2, 'unpaid',
-      $3, $4, $5::JSONB, $6::JSONB, $7::JSONB
-    )
-    RETURNING *`,
-    [
-      billingRecipientId,
-      totalAmount,
-      shippingMethod,
-      shippingPriceOre / 100,
-      shippingAddress
-        ? JSON.stringify(shippingAddress)
-        : null,
-      shippingServicePoint
-        ? JSON.stringify(shippingServicePoint)
-        : null,
-      shippingEstimate
-        ? JSON.stringify(shippingEstimate)
-        : null,
-    ]
-  );
+  `INSERT INTO orders (
+     billing_recipient_id,
+     user_id,
+     total_amount,
+     payment_status,
+     shipping_method,
+     shipping_price,
+     shipping_address,
+     shipping_service_point,
+     shipping_estimate
+   )
+   VALUES (
+     $1, $2, $3, 'unpaid',
+     $4, $5, $6::JSONB, $7::JSONB, $8::JSONB
+   )
+   RETURNING *`,
+  [
+    billingRecipientId,
+    req.user?.id ?? null,
+    totalAmount,
+    shippingMethod,
+    shippingPriceOre / 100,
+    shippingAddress
+      ? JSON.stringify(shippingAddress)
+      : null,
+    shippingServicePoint
+      ? JSON.stringify(shippingServicePoint)
+      : null,
+    shippingEstimate
+      ? JSON.stringify(shippingEstimate)
+      : null,
+  ]
+);
 
     const order = orderResult.rows[0];
 
