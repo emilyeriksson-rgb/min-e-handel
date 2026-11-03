@@ -17,14 +17,26 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import { stripeWebhook } from "./controllers/paymentController.js";
 import shippingRoutes from "./routes/shippingRoutes.js";
 
+import cookieParser from "cookie-parser";
+import authRoutes from "./routes/authRoutes.js";
+
+import {
+  optionalAuth,
+  requireAdmin,
+} from "./middleware/authMiddleware.js";
+
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-app.use(cors());
-app.post("/api/payments/webhook", express.raw({ type: "application/json" }), stripeWebhook);
+app.use(cors({
+  origin: new URL(process.env.FRONTEND_URL).origin,
+  credentials: true,
+}));app.post("/api/payments/webhook", express.raw({ type: "application/json" }), stripeWebhook);
 app.use(express.json());
+app.use(cookieParser());
+app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/course-sessions", courseSessionRoutes);
@@ -42,7 +54,7 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/api/database-test", async (req, res) => {
+app.get("/api/database-test", optionalAuth, requireAdmin, async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW() AS current_time");
 

@@ -124,7 +124,11 @@ for (const name of ["package.json", "package-lock.json"]) {
 await writeFile(
   path.join(target, "src/api/index.js"),
   `import express from "express";
-import cors from "cors";
+app.use(cors({
+  origin: new URL(process.env.FRONTEND_URL).origin,
+  credentials: true,
+}));import cookieParser from "cookie-parser";
+import authRoutes from "../../backend/routes/authRoutes.js";
 import courseRoutes from "../../backend/routes/courseRoutes.js";
 import courseSessionRoutes from "../../backend/routes/courseSessionRoutes.js";
 import orderRoutes from "../../backend/routes/orderRoutes.js";
@@ -151,6 +155,8 @@ app.post(
 );
 
 app.use(express.json());
+app.use(cookieParser());
+app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/product-images", productImageRoutes);
 app.use("/api/courses", courseRoutes);

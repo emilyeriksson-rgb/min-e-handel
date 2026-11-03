@@ -1,17 +1,60 @@
 import express from "express";
-import { getAllOrders,
-    getOrderById,
-    createOrder,
-    updateOrderStatus,
-    updateInvoiceStatus,
- } from "../controllers/orderController.js";
+import {
+  getAllOrders,
+  getOrderById,
+  getMyOrders,
+  createOrder,
+  updateOrderStatus,
+  updateInvoiceStatus,
+} from "../controllers/orderController.js";
+import {
+  optionalAuth,
+  requireAuth,
+  requireAdmin,
+  requireTrustedOrigin,
+} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", getAllOrders);
-router.get("/:id", getOrderById);
-router.post("/", createOrder);
-router.patch("/:id/status", updateOrderStatus);
-router.patch("/:id/invoice-status", updateInvoiceStatus);
+const adminRead = [
+  optionalAuth,
+  requireAdmin,
+];
+
+const adminWrite = [
+  optionalAuth,
+  requireAdmin,
+  requireTrustedOrigin,
+];
+
+router.get(
+  "/mine",
+  optionalAuth,
+  requireAuth,
+  getMyOrders
+);
+
+router.get("/", adminRead, getAllOrders);
+
+router.get("/:id", adminRead, getOrderById);
+
+router.post(
+  "/",
+  requireTrustedOrigin,
+  optionalAuth,
+  createOrder
+);
+
+router.patch(
+  "/:id/status",
+  adminWrite,
+  updateOrderStatus
+);
+
+router.patch(
+  "/:id/invoice-status",
+  adminWrite,
+  updateInvoiceStatus
+);
 
 export default router;

@@ -2,6 +2,8 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { FiShoppingCart } from "react-icons/fi";
 import useCart from "../hooks/useCart.js";
 import useCurrency from "../hooks/useCurrency.js";
+import useAuth from "../hooks/useAuth.js";
+
 
 function Header() {
   const { pathname } = useLocation();
@@ -11,6 +13,7 @@ const isHomePage =
   pathname === "/courses/";
   const { cartCount } = useCart();
   const { currency, setCurrency, loading, error } = useCurrency();
+  const { user } = useAuth();
 
   return (
     <header
@@ -55,6 +58,13 @@ const isHomePage =
               <span role="alert">{error} Priser visas i SEK.</span>
             )}
           </div>
+
+          <NavLink
+            to={user ? "/mitt-konto" : "/logga-in"}
+            className="btn-style"
+          >
+            {user ? "Mitt konto" : "Logga in"}
+          </NavLink>
 
           <NavLink
             to="/cart"

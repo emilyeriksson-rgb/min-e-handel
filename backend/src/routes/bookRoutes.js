@@ -13,8 +13,15 @@ import {
   removeBookFromIndex,
 } from "../integrations/searchAdapter.js";
 import { importBooks } from "../services/bookImportService.js";
+import {
+  optionalAuth,
+  protectAdminWrites,
+  requireAdmin,
+} from "../middleware/authMiddleware.js";
 
 const router = Router();
+
+router.use(optionalAuth, protectAdminWrites);
 
 router.get("/", async (req, res) => {
   try {
@@ -29,12 +36,12 @@ router.get("/", async (req, res) => {
 }
 });
 
-router.get("/csv", async (req, res) => {
+router.get("/csv", requireAdmin, async (req, res) => {
   const result = await getBooksFromCsv();
   res.json(result);
 });
 
-router.get("/xml", async (req, res) => {
+router.get("/xml", requireAdmin, async (req, res) => {
   const result = await getBooksFromXml();
   res.json(result);
 });
