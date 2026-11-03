@@ -1,0 +1,12 @@
+.cart-notice {
+  position: fixed;
+  top: max(5.5rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+  z-index: 100;
+  max-height: calc(100dvh - 7rem);
+  overflow-y: auto;
+}
+
+.cart-notice p {
+  overflow-wrap: anywhere;
+}

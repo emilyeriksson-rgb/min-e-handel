@@ -2,10 +2,14 @@ import { useState } from "react";
 import CartContext from "./CartContext.js";
 
 function CartProvider({ children }) {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartState, setCartState] = useState({
+    items: [],
+    notice: null,
+  });
 
-  // Kurser skickar ett kurstillfälle.
-  // Böcker skickas utan kurstillfälle.
+  const cartItems = cartState.items;
+  const cartNotice = cartState.notice;
+
   const addToCart = (product, session) => {
     const isBook = !session;
 
@@ -41,49 +45,64 @@ function CartProvider({ children }) {
       return;
     }
 
-    setCartItems((currentItems) => {
-      const existingItem = currentItems.find(
+    const noticeId = crypto.randomUUID();
+
+    setCartState((current) => {
+      const existingItem = current.items.find(
         (item) => item.id === id
       );
 
-      if (existingItem) {
-        return currentItems.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                maxQuantity,
-                quantity: Math.min(
-                  item.quantity + 1,
-                  maxQuantity
-                ),
-              }
-            : item
-        );
+      const quantity = existingItem
+        ? Math.min(existingItem.quantity + 1, maxQuantity)
+        : 1;
+
+      // Visa ingen ny bekräftelse om inget kunde läggas till.
+      if (
+        existingItem &&
+        quantity <= existingItem.quantity
+      ) {
+        return current;
       }
 
-      return [
-        ...currentItems,
-        {
-          id,
-          type: isBook ? "book" : "course",
-          sku: isBook ? product.sku : null,
-          courseSessionId: isBook ? null : session.id,
-          productId: product.id,
+      const items = existingItem
+        ? current.items.map((item) =>
+            item.id === id
+              ? { ...item, quantity, maxQuantity }
+              : item
+          )
+        : [
+            ...current.items,
+            {
+              id,
+              type: isBook ? "book" : "course",
+              sku: isBook ? product.sku : null,
+              courseSessionId: isBook ? null : session.id,
+              productId: product.id,
+              title: product.title,
+              price,
+              imageUrl: product.image_url,
+              session: session ?? null,
+              quantity,
+              maxQuantity,
+            },
+          ];
+
+      return {
+        items,
+        notice: {
+          id: noticeId,
           title: product.title,
-          price,
-          imageUrl: product.image_url,
-          session: session ?? null,
-          quantity: 1,
-          maxQuantity,
+          quantity,
         },
-      ];
+      };
     });
   };
 
   const removeFromCart = (id) => {
-    setCartItems((currentItems) =>
-      currentItems.filter((item) => item.id !== id)
-    );
+    setCartState((current) => ({
+      ...current,
+      items: current.items.filter((item) => item.id !== id),
+    }));
   };
 
   const updateQuantity = (id, quantity) => {
@@ -96,23 +115,32 @@ function CartProvider({ children }) {
       return;
     }
 
-    setCartItems((currentItems) =>
-      currentItems.map((item) =>
+    setCartState((current) => ({
+      ...current,
+      items: current.items.map((item) =>
         item.id === id
           ? {
               ...item,
-              quantity: Math.min(
-                quantity,
-                item.maxQuantity
-              ),
+              quantity: Math.min(quantity, item.maxQuantity),
             }
           : item
-      )
-    );
+      ),
+    }));
   };
 
   const clearCart = () => {
-    setCartItems([]);
+    setCartState({
+      items: [],
+      notice: null,
+    });
+  };
+
+  const dismissCartNotice = () => {
+    setCartState((current) =>
+      current.notice
+        ? { ...current, notice: null }
+        : current
+    );
   };
 
   const cartCount = cartItems.reduce(
@@ -125,18 +153,20 @@ function CartProvider({ children }) {
     0
   );
 
-  const value = {
-    cartItems,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-    cartCount,
-    cartTotal,
-  };
-
   return (
-    <CartContext.Provider value={value}>
+    <CartContext.Provider
+      value={{
+        cartItems,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        cartCount,
+        cartTotal,
+        cartNotice,
+        dismissCartNotice,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
