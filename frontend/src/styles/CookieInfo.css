@@ -1,0 +1,31 @@
+.cookie-info {
+  width: calc(100% - 2rem);
+  max-width: 72rem;
+  margin: 2rem auto;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-border, #dfe5ee);
+  border-radius: 1.25rem;
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #17243b);
+  line-height: 1.6;
+}
+
+.cookie-info summary {
+  width: fit-content;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.cookie-info summary:focus-visible {
+  outline: 3px solid var(--color-primary, #245bd7);
+  outline-offset: 4px;
+}
+
+.cookie-info dt {
+  margin-top: 0.75rem;
+  font-weight: 600;
+}
+
+.cookie-info dd {
+  margin: 0;
+}
