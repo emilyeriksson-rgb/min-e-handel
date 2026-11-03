@@ -1,8 +1,7 @@
 import express from "express";
-app.use(cors({
-  origin: new URL(process.env.FRONTEND_URL).origin,
-  credentials: true,
-}));import cookieParser from "cookie-parser";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+
 import authRoutes from "../../backend/routes/authRoutes.js";
 import courseRoutes from "../../backend/routes/courseRoutes.js";
 import courseSessionRoutes from "../../backend/routes/courseSessionRoutes.js";
@@ -14,13 +13,17 @@ import catalogRoutes from "../../backend/routes/catalogRoutes.js";
 import searchRoutes from "../../backend/routes/searchRoutes.js";
 import paymentRoutes from "../../backend/routes/paymentRoutes.js";
 import productImageRoutes from "../../backend/routes/productImageRoutes.js";
+import shippingRoutes from "../../backend/routes/shippingRoutes.js";
+
 import { stripeWebhook } from "../../backend/controllers/paymentController.js";
 import errorHandler from "../../backend/middleware/errorHandler.js";
-import shippingRoutes from "../../backend/routes/shippingRoutes.js";
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: new URL(process.env.FRONTEND_URL).origin,
+  credentials: true,
+}));
 
 // Signaturkontrollen kräver rå request-body.
 app.post(
@@ -31,6 +34,7 @@ app.post(
 
 app.use(express.json());
 app.use(cookieParser());
+
 app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/product-images", productImageRoutes);
@@ -42,7 +46,8 @@ app.use("/api/currency", currencyRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/catalog", catalogRoutes);
 app.use("/api/search", searchRoutes);
-app.use(errorHandler);
 app.use("/api/shipping", shippingRoutes);
+
+app.use(errorHandler);
 
 export default app;
