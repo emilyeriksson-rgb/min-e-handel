@@ -124,10 +124,8 @@ for (const name of ["package.json", "package-lock.json"]) {
 await writeFile(
   path.join(target, "src/api/index.js"),
   `import express from "express";
-app.use(cors({
-  origin: new URL(process.env.FRONTEND_URL).origin,
-  credentials: true,
-}));import cookieParser from "cookie-parser";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 import authRoutes from "../../backend/routes/authRoutes.js";
 import courseRoutes from "../../backend/routes/courseRoutes.js";
 import courseSessionRoutes from "../../backend/routes/courseSessionRoutes.js";
@@ -145,7 +143,10 @@ import shippingRoutes from "../../backend/routes/shippingRoutes.js";
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: new URL(process.env.FRONTEND_URL).origin,
+  credentials: true,
+}));
 
 // Signaturkontrollen kräver rå request-body.
 app.post(
@@ -167,46 +168,69 @@ app.use("/api/currency", currencyRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/catalog", catalogRoutes);
 app.use("/api/search", searchRoutes);
-app.use(errorHandler);
 app.use("/api/shipping", shippingRoutes);
+app.use(errorHandler);
 
 export default app;
 `
 );
 
 await writeFile(
-  path.join(target, "vercel.json"),
-  JSON.stringify(
-    {
-      version: 2,
-      builds: [
-        {
-          src: "src/api/index.js",
-          use: "@vercel/node",
-        },
-        {
-          src: "public/**",
-          use: "@vercel/static",
-        },
-      ],
-      routes: [
-        {
-          src: "/api/(.*)",
-          dest: "src/api/index.js",
-        },
-        {
-          src: "/(.*\\.(?:js|css|svg|png|jpg|jpeg|webp|ico|woff|woff2))",
-          dest: "public/$1",
-        },
-        {
-          src: "/(.*)",
-          dest: "public/index.html",
-        },
-      ],
-    },
-    null,
-    2
-  ) + "\n"
+  path.join(target, "src/api/index.js"),
+  `import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+
+import authRoutes from "../../backend/routes/authRoutes.js";
+import courseRoutes from "../../backend/routes/courseRoutes.js";
+import courseSessionRoutes from "../../backend/routes/courseSessionRoutes.js";
+import orderRoutes from "../../backend/routes/orderRoutes.js";
+import locationRoutes from "../../backend/routes/locationRoutes.js";
+import currencyRoutes from "../../backend/routes/currencyRoutes.js";
+import bookRoutes from "../../backend/routes/bookRoutes.js";
+import catalogRoutes from "../../backend/routes/catalogRoutes.js";
+import searchRoutes from "../../backend/routes/searchRoutes.js";
+import paymentRoutes from "../../backend/routes/paymentRoutes.js";
+import productImageRoutes from "../../backend/routes/productImageRoutes.js";
+import shippingRoutes from "../../backend/routes/shippingRoutes.js";
+
+import { stripeWebhook } from "../../backend/controllers/paymentController.js";
+import errorHandler from "../../backend/middleware/errorHandler.js";
+
+const app = express();
+
+app.use(cors({
+  origin: new URL(process.env.FRONTEND_URL).origin,
+  credentials: true,
+}));
+
+// Signaturkontrollen kräver rå request-body.
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhook
+);
+
+app.use(express.json());
+app.use(cookieParser());
+
+app.use("/api/auth", authRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/product-images", productImageRoutes);
+app.use("/api/courses", courseRoutes);
+app.use("/api/course-sessions", courseSessionRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/locations", locationRoutes);
+app.use("/api/currency", currencyRoutes);
+app.use("/api/books", bookRoutes);
+app.use("/api/catalog", catalogRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/shipping", shippingRoutes);
+
+app.use(errorHandler);
+
+export default app;
+`
 );
 
 console.log(
