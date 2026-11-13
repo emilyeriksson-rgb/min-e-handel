@@ -1,3 +1,8 @@
+import {
+  startGoogleLogin,
+  googleCallback,
+} from "../controllers/googleAuthController.js";
+
 import { Router } from "express";
 import {
   register,
@@ -51,5 +56,9 @@ router.get(
   requireAuth,
   getMe
 );
+
+router.get("/google", startGoogleLogin);
+
+router.get("/google/callback", googleCallback);
 
 export default router;
