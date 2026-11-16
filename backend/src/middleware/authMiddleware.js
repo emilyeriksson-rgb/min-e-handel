@@ -21,11 +21,13 @@ export async function optionalAuth(req, res, next) {
 
     const result = await pool.query(
       `SELECT
-         u.id,
-         u.email,
-         u.first_name,
-         u.last_name,
-         u.role
+        u.id,
+        u.email,
+        u.first_name,
+        u.last_name,
+        u.role,
+        u.github_id,
+        u.github_login
        FROM auth_sessions s
        JOIN users u ON u.id = s.user_id
        WHERE s.id = $1
@@ -120,4 +122,35 @@ export function protectAdminWrites(req, res, next) {
   return requireAdmin(req, res, () =>
     requireTrustedOrigin(req, res, next)
   );
+}
+
+export function requireGitHubAdmin(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({
+      message: "Du behöver logga in.",
+    });
+  }
+
+  const allowedLogins = (
+    process.env.ADMIN_GITHUB_LOGINS || ""
+  )
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+
+  const login = req.user.github_login?.toLowerCase();
+
+  if (
+    req.user.role !== "admin" ||
+    !req.user.github_id ||
+    !login ||
+    !allowedLogins.includes(login)
+  ) {
+    return res.status(403).json({
+      message:
+        "Logga in med ett GitHub-konto som har administratörsbehörighet.",
+    });
+  }
+
+  return next();
 }

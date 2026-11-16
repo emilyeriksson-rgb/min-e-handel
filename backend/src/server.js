@@ -19,6 +19,7 @@ import shippingRoutes from "./routes/shippingRoutes.js";
 
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes.js";
+import githubIssueRoutes from "./routes/githubIssueRoutes.js";
 
 import {
   optionalAuth,
@@ -48,6 +49,7 @@ app.use("/api/search", searchRoutes);
 app.use("/api/catalog", catalogRoutes);
 app.use("/api/product-images", productImageRoutes);
 app.use("/api/shipping", shippingRoutes);
+app.use("/api/admin/issues", githubIssueRoutes);
 app.get("/", (req, res) => {
   res.json({
     message: "E-handelns API fungerar!",

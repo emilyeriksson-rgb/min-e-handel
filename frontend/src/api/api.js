@@ -596,3 +596,49 @@ export async function fetchMyOrders(signal) {
 
   return data.orders;
 }
+
+export async function fetchOpenIssues(page = 1, signal) {
+  const response = await apiFetch(
+    `${API_URL}/admin/issues?page=${encodeURIComponent(page)}`,
+    { signal }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Kunde inte hämta issues."
+    );
+  }
+
+  return data;
+}
+
+export async function reportGitHubIssue({
+  title,
+  description,
+}) {
+  const response = await apiFetch(
+    `${API_URL}/admin/issues`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title,
+        description,
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Kunde inte rapportera felet."
+    );
+  }
+
+  return data.issue;
+}

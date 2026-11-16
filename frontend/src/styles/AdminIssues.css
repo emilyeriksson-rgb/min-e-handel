@@ -1,0 +1,153 @@
+/* Sidlayout */
+.admin-issues {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 1.5rem;
+}
+
+.admin-issues > h1 {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+/* Vita paneler */
+.admin-issues-panel {
+  min-width: 0;
+  padding: clamp(1rem, 2vw, 1.75rem);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-small);
+}
+
+.admin-issues-panel > h2 {
+  margin: 0 0 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 1.25rem;
+}
+
+/* Formulär */
+.admin-issues form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.admin-issues form input,
+.admin-issues form textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-issues form textarea {
+  min-height: 12rem;
+  resize: vertical;
+}
+
+.admin-issues form > p {
+  margin-bottom: 1.25rem;
+}
+
+.admin-issues textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+/* Fel och bekräftelser */
+.admin-issues [role="alert"] {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-small);
+  background: var(--color-danger-tint);
+}
+
+.admin-issues form [role="status"] {
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--color-success);
+  border-radius: var(--radius-small);
+  background: var(--color-background);
+  color: var(--color-success);
+}
+
+/* Issues-lista */
+.admin-issues-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-issues-list a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-background);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.admin-issues-list a:hover {
+  border-color: var(--color-primary);
+  background: var(--color-tint);
+}
+
+.issue-number {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.issue-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.issue-status {
+  padding: 0.2rem 0.6rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--color-success);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Sekundära knappar för listan */
+.admin-issues-panel > .btn-style {
+  margin: 0 0.5rem 0.5rem 0;
+  border-color: var(--color-input-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.admin-issues-panel > .btn-style:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-tint);
+  color: var(--color-primary-hover);
+}
+
+/* Anpassning för mindre skärmar */
+@media (max-width: 75rem) {
+  .admin-issues {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 35rem) {
+  .admin-issues-list a {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .issue-status {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
