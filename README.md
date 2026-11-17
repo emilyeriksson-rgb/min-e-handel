@@ -86,3 +86,25 @@ Algolia kan ändra priser, kvoter eller villkor. Det kan påverka både kostnade
 Jag behöver också tänka på personuppgifter när externa tjänster används. Supabases bildlagring är publik, så privata bilder ska inte laddas upp där.
 
 Adaptrarna gör ett framtida byte av leverantör enklare, men ett byte kräver fortfarande anpassning och tester.
+
+## Labb 5 – AI och PostNord
+
+Jag använde ChatGPT för att stegvis implementera frakt för kurslitteratur i Kursrum. Jag beskrev projektets stack och bad om exakta filer och funktioner att ändra, samtidigt som befintlig design, filtrering och sortering skulle behållas.
+
+Min första prompt började: ”Hjälp mig steg för steg med Labb 5 i webbshoppen Kursrum. Labb 2–4 är klara.”
+
+### Arbetsgång och AI:ns förslag
+
+1. **Ombud:** AI:n föreslog en separat PostNord-adapter i Express som hämtar närmaste ombud med Service Points V5, `nearest/byaddress`. Svaret valideras med Zod och anropet har timeout och felhantering. Jag testade med min egen sandlådenyckel, utan att dela den i chatten.
+
+2. **Leveranstid:** AI:ns första beskrivning byggde på en äldre guide. Jag hämtade därför OpenAPI-specifikationen för Transit Time Calculation V1 and V2, version 2.0.3, från PostNords portal och klistrade in den för jämförelse.
+
+3. **Rättning mot dokumentationen:** Vi anpassade anropet till `/rest/transport/v2/transittime/addresstoaddress`, med `originPostalCode` och `destinationPostalCode`. Parametern `serviceGroup` från AI:ns första förslag togs bort eftersom den inte finns i V2-specifikationen. Valideringen anpassades till V2:s arrayformat, `service.basicServiceCode` och `estimatedTimeOfArrival`. Koden hanterar både datum och dagintervall och kontrollerar att en användbar leveransuppskattning faktiskt finns.
+
+4. **Frakt och order:** AI:n hjälpte mig att lägga till serverberäknade fraktpriser, kontroll av valt ombud, lagring på ordern och en separat fraktrad i Stripe Checkout. React skickar produktidentifierare, antal och fraktval, aldrig priser.
+
+### Kontroller
+
+Jag testade ombud och leveranstid i PostNords sandlåda för både ombud och hemleverans. Ett manipulerat ombudsval avvisades. Jag testade även fraktprisernas gränsvärden och kontrollerade att en bok för 99 kr plus hemleverans för 99 kr gav totalt 198 kr i databasen och Stripe Checkout.
+
+Dokumentation som användes vid kontrollen: [PostNord – Transit Time Calculation V1 and V2](https://atdeveloper.postnord.com/apis/details?systemName=transport-v2-transittime-calculation).
