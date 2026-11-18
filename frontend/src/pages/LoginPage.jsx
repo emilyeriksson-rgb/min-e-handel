@@ -10,6 +10,13 @@ function LoginPage({ admin = false }) {
   const { login, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const googleError = new URLSearchParams(
+  location.search
+).get("google_error");
+
+const githubError = new URLSearchParams(
+  location.search
+).get("github_error");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -88,8 +95,38 @@ function LoginPage({ admin = false }) {
   };
 
   return (
-    <main className="site-main checkout-page bokad">
-      <h1>{text.title}</h1>
+  <main className="site-main checkout-page bokad">
+  <h1>{text.title}</h1>
+
+  {admin && (
+    <section>
+      {githubError && (
+        <p role="alert">{githubError}</p>
+      )}
+
+      <a
+        href={`${import.meta.env.VITE_API_URL}/auth/github`}
+        className="btn-style"
+      >
+        Logga in med GitHub
+      </a>
+    </section>
+  )}
+
+  {!admin && (
+    <section>
+      {googleError && (
+        <p role="alert">{googleError}</p>
+      )}
+
+      <a
+        href={`${import.meta.env.VITE_API_URL}/auth/google`}
+        className="btn-style"
+      >
+        Logga in med Google
+      </a>
+    </section>
+  )}
 
       {!admin && location.state?.registered && (
         <p role="status">

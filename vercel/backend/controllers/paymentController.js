@@ -1,5 +1,8 @@
 import pool from "../config/db.js";
 import { verifyStripeWebhook } from "../integrations/stripeAdapter.js";
+import {
+  sendOrderConfirmation,
+} from "../services/orderConfirmationService.js";
 
 export async function stripeWebhook(req, res) {
   let event;
@@ -110,9 +113,32 @@ export async function stripeWebhook(req, res) {
         );
       }
     }
-    await client.query("COMMIT");
-    inTransaction = false;
-    return res.json({ received: true });
+   await client.query("COMMIT");
+inTransaction = false;
+
+// Släpp databasanslutningen före nätverksanropet.
+client.release();
+client = null;
+
+const isPaidEvent =
+  session.payment_status === "paid" &&
+  [
+    "checkout.session.completed",
+    "checkout.session.async_payment_succeeded",
+  ].includes(event.type);
+
+if (isPaidEvent) {
+  try {
+    await sendOrderConfirmation(order.id);
+  } catch (error) {
+    console.error("Order confirmation failed:", {
+      orderId: order.id,
+      code: error.code || "EMAIL_CONFIRMATION_ERROR",
+    });
+  }
+}
+
+return res.json({ received: true });
   } catch (error) {
     if (client && inTransaction) await client.query("ROLLBACK");
     console.error("Stripe webhook processing failed:", error.message);

@@ -1,3 +1,13 @@
+import {
+  startGoogleLogin,
+  googleCallback,
+} from "../controllers/googleAuthController.js";
+
+import {
+  startGitHubLogin,
+  githubCallback,
+} from "../controllers/githubAuthController.js";
+
 import { Router } from "express";
 import {
   register,
@@ -51,5 +61,13 @@ router.get(
   requireAuth,
   getMe
 );
+
+router.get("/google", startGoogleLogin);
+
+router.get("/google/callback", googleCallback);
+
+router.get("/github", startGitHubLogin);
+
+router.get("/github/callback", githubCallback);
 
 export default router;

@@ -24,6 +24,10 @@ function AdminSidebar() {
         <NavLink to="/admin/books">
           Manage Books
         </NavLink>
+
+        <NavLink to="/admin/issues">
+          Issue reports
+        </NavLink>
       </nav>
     </aside>
   );

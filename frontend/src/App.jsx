@@ -18,6 +18,7 @@ import AdminHomePage from "./pages/admin/AdminHomePage.jsx";
 import AdminCoursesPage from "./pages/admin/AdminCoursesPage.jsx";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage.jsx";
 import AdminBooksPage from "./pages/admin/AdminBooksPage.jsx";
+import AdminIssuesPage from "./pages/admin/AdminIssuesPage.jsx";
 
 function App() {
   return (
@@ -66,6 +67,7 @@ function App() {
         <Route path="courses" element={<AdminCoursesPage />} />
         <Route path="orders" element={<AdminOrdersPage />} />
         <Route path="books" element={<AdminBooksPage />} />
+        <Route path="issues" element={<AdminIssuesPage />} />
       </Route>
     </Routes>
   );
