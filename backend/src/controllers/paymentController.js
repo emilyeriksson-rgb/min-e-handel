@@ -1,5 +1,6 @@
 import pool from "../config/db.js";
 import { verifyStripeWebhook } from "../integrations/stripeAdapter.js";
+import { sendOrderConfirmation } from "../services/orderConfirmationService.js";
 
 export async function stripeWebhook(req, res) {
   let event;
@@ -13,6 +14,7 @@ export async function stripeWebhook(req, res) {
   if (!session.client_reference_id || !/^[1-9]\d*$/.test(session.client_reference_id)) {
     return res.json({ received: true, ignored: true });
   }
+  let confirmationOrderId;
   let client;
   let inTransaction = false;
   try {
@@ -102,6 +104,7 @@ export async function stripeWebhook(req, res) {
           `UPDATE payments SET paid_at = COALESCE(paid_at, NOW()), invoice_status = 'paid'
            WHERE order_id = $1 AND payment_method = 'stripe'`, [order.id]
         );
+          confirmationOrderId = order.id;
       } else if ((event.type === "checkout.session.expired" && session.status === "expired") ||
                  event.type === "checkout.session.async_payment_failed") {
         await client.query(
@@ -110,16 +113,30 @@ export async function stripeWebhook(req, res) {
         );
       }
     }
-    await client.query("COMMIT");
+      await client.query("COMMIT");
     inTransaction = false;
-    return res.json({ received: true });
   } catch (error) {
     if (client && inTransaction) await client.query("ROLLBACK");
     console.error("Stripe webhook processing failed:", error.message);
-    return res.status(500).json({ message: "Webhook processing failed. Retry required." });
+    return res.status(500).json({
+      message: "Webhook processing failed. Retry required.",
+    });
   } finally {
     client?.release();
   }
+
+  if (confirmationOrderId !== undefined) {
+    try {
+      await sendOrderConfirmation(confirmationOrderId);
+    } catch (error) {
+      console.error("Order confirmation failed:", {
+        orderId: confirmationOrderId,
+        code: error.code || "EMAIL_CONFIRMATION_ERROR",
+      });
+    }
+  }
+
+  return res.json({ received: true });
 }
 
 export async function getPaymentConfirmation(req, res) {

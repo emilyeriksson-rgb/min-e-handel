@@ -90,7 +90,7 @@ export function buildOrderConfirmationEmail(input) {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Orderbekräftelse #${order.orderId}</title>
+        <title>Orderbekräftelse</title>
       </head>
       <body style="font-family: Arial, sans-serif; color: #17243b;">
         <div style="max-width: 640px; margin: auto; padding: 24px;">
@@ -137,7 +137,11 @@ export function buildOrderConfirmationEmail(input) {
             </strong>
           </p>
 
-          <p>Vänliga hälsningar,<br>Kursrum</p>
+         <p style="margin: 0 0 8px;">Vänliga hälsningar,</p>
+          <img
+            src="https://fsu25d-systemutveckling-uppgift-1-d.vercel.app/img/kursrum-logo.png"
+            alt="Kursrum" width="150" style="display: block; width: 150px; height: auto;"
+          >
         </div>
       </body>
     </html>
@@ -150,7 +154,7 @@ export function buildOrderConfirmationEmail(input) {
     textRows,
     `Frakt: ${formatMoney(order.shippingPriceOre)}`,
     `Totalt: ${formatMoney(order.totalAmountOre)}`,
-    "Vänliga hälsningar,\nKursrum",
+    "Vänliga hälsningar,\n<Kursrum>",
   ].join("\n\n");
 
   return { html, text };
