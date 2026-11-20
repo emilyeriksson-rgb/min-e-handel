@@ -1,37 +1,27 @@
 # Kursrum
+
 ## Kom igång
-**Deployad shop:** [Öppna Kursrum](https://fsu25d-systemutveckling-uppgift-1-d.vercel.app)
-Kör lokalt
-Du behöver Node.js 24, npm och PostgreSQL. För en ny databas: kör backend/database/schema.sql och sedan filerna i backend/database/migrations/ i nummerordning.
+
+**Deployad shop:** [Öppna Kursrum](https://fsu25d-systemutveckling-uppgift-1-d.vercel.app/) Kör lokalt Du behöver Node.js 24, npm och PostgreSQL. För en ny databas: kör backend/database/schema.sql och sedan filerna i backend/database/migrations/ i nummerordning.
 
 Kopiera backend/.env.example till backend/.env. Fyll i databasanslutning och testinställningar för leverantören, Algolia, Stripe, Supabase Storage och PostNord. Supabase behöver en publik bildbucket. Nycklar ska aldrig committas.
 
-Sätt även:
-PORT=3001
-FRONTEND_URL=http://localhost:5173
+Sätt även: PORT=3001 FRONTEND_URL=[http://localhost:5173](http://localhost:5173/)
 
-Skapa frontend/.env:
-VITE_API_URL=http://localhost:3001/api
+Skapa frontend/.env: VITE_API_URL=[http://localhost:3001/api](http://localhost:3001/api)
 
-Starta backend från projektroten:
-cd backend
-npm install
-node src/scripts/configureSearch.js
-node src/scripts/syncCourses.js
-npm run dev
+Starta backend från projektroten: cd backend npm install node src/scripts/configureSearch.js node src/scripts/syncCourses.js npm run dev
 
-Starta frontend i en annan terminal från projektroten:
-cd frontend
-npm install
-npm run dev
+Starta frontend i en annan terminal från projektroten: cd frontend npm install npm run dev
 
-Öppna adressen som Vite visar. Anpassa FRONTEND_URL om adressen skiljer sig.
-Testa integrationerna
-Importera CSV/XML och ladda upp produktbilder via admin. Importen skickar böcker till Algolia. Testa frakt genom att lägga en bok i varukorgen och välja leverans.
+Öppna adressen som Vite visar. Anpassa FRONTEND_URL om adressen skiljer sig. Testa integrationerna Importera CSV/XML och ladda upp produktbilder via admin. Importen skickar böcker till Algolia. Testa frakt genom att lägga en bok i varukorgen och välja leverans.
 
 För lokal betalning behövs Stripe CLI:
+
+```powershell
 stripe login
-stripe listen --forward-to http://localhost:3001/api/payments/webhook
+stripe listen --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired" --forward-to http://localhost:3001/api/payments/webhook
+```
 
 Spara lyssnarens signeringshemlighet som STRIPE_WEBHOOK_SECRET i backend/.env och starta om backend. Låt lyssnaren vara igång under testköpet. Använd endast Stripes testbetalningsuppgifter.
 
@@ -96,11 +86,8 @@ Min första prompt började: ”Hjälp mig steg för steg med Labb 5 i webbshopp
 ### Arbetsgång och AI:ns förslag
 
 1. **Ombud:** AI:n föreslog en separat PostNord-adapter i Express som hämtar närmaste ombud med Service Points V5, `nearest/byaddress`. Svaret valideras med Zod och anropet har timeout och felhantering. Jag testade med min egen sandlådenyckel, utan att dela den i chatten.
-
 2. **Leveranstid:** AI:ns första beskrivning byggde på en äldre guide. Jag hämtade därför OpenAPI-specifikationen för Transit Time Calculation V1 and V2, version 2.0.3, från PostNords portal och klistrade in den för jämförelse.
-
 3. **Rättning mot dokumentationen:** Vi anpassade anropet till `/rest/transport/v2/transittime/addresstoaddress`, med `originPostalCode` och `destinationPostalCode`. Parametern `serviceGroup` från AI:ns första förslag togs bort eftersom den inte finns i V2-specifikationen. Valideringen anpassades till V2:s arrayformat, `service.basicServiceCode` och `estimatedTimeOfArrival`. Koden hanterar både datum och dagintervall och kontrollerar att en användbar leveransuppskattning faktiskt finns.
-
 4. **Frakt och order:** AI:n hjälpte mig att lägga till serverberäknade fraktpriser, kontroll av valt ombud, lagring på ordern och en separat fraktrad i Stripe Checkout. React skickar produktidentifierare, antal och fraktval, aldrig priser.
 
 ### Kontroller
@@ -123,31 +110,75 @@ Admin kan logga in med GitHub. Åtkomsten begränsas till tillåtna GitHub-konto
 
 På adminsidan kan admin rapportera fel med rubrik och beskrivning samt se öppna issues med länkar till GitHub. Backend skapar issues med shoppens egen token och anger vilken admin som rapporterat. Token lagras endast på servern.
 
+## Så fungerar autentiseringen i Kursrum
+
+### Från inloggningsknapp till konto
+
+När en kund klickar på ”Logga in med Google”, eller en administratör väljer
+GitHub, går webbläsaren först till min backend. Backend skapar ett
+inloggningsförsök som gäller i tio minuter. Försöket sparas i PostgreSQL
+och kopplas till webbläsaren med en tillfällig HttpOnly-cookie. Sedan skickas
+användaren vidare till Google eller GitHub.
+
+Jag använder både state och PKCE. När användaren kommer tillbaka kontrollerar
+backend att state hör till försöket som startades i samma webbläsare. Det
+skyddar mot att någon får en annan person att slutföra fel inloggning.
+Försöket förbrukas när det används. Med PKCE skickar backend först en
+SHA-256-hash av ett slumpvärde. När inloggningskoden sedan byts mot en token
+måste backend visa upp det ursprungliga värdet. En uppsnappad kod räcker
+därför inte för att slutföra kodutbytet.
+
+Vid Google-inloggning kontrollerar backend ID-tokenens signatur, utfärdare,
+mottagare och utgångstid. Dessutom måste tokenens nonce matcha det specifika
+inloggningsförsöket. Kunden identifieras med Googles stabila användar-ID, sub.
+Det gör att två konton inte automatiskt kopplas ihop bara för att de har samma
+e-postadress.
+
+Vid GitHub-inloggning använder backend en access-token för att hämta profilen
+från GitHub. Användarnamnet måste finnas i ADMIN_GITHUB_LOGINS för att backend
+ska skapa en administratörssession. Om listan är tom släpps ingen in via det
+flödet.
+
+### Vilka tokens används och hur länge?
+
+| Token | Användning och livslängd |
+|---|---|
+| Googles ID-token | Backend använder den för att verifiera kundens identitet och kontrollerar utgångstiden i `exp`. Shoppen sparar den inte efter inloggningen. Den använder ingen refresh-token. |
+| GitHub-användarens access-token | Backend använder den under callbacken för att läsa profilen och sparar den inte. GitHub styr hur länge token är giltig. Att callbacken är slut innebär inte i sig att token har spärrats hos GitHub. |
+| Shoppens `GITHUB_ISSUES_TOKEN` | Backend använder en separat token för att läsa och skapa issues i shoppens repo. Den lagras som en miljövariabel på servern. Giltigheten styrs av inställningarna hos GitHub och token kan återkallas där. |
+| Kursrums egen sessionstoken | Efter godkänd inloggning skapar backend en signerad JWT som gäller i en timme. Den ligger i cookien `kursrum_auth`, som är HttpOnly och använder Secure i produktion. Leverantörernas tokens skickas aldrig till React. |
+
+### Varför jag kombinerar JWT med en serversession
+
+När användaren öppnar en skyddad sida kontrollerar backend både JWT:n och
+motsvarande rad i `auth_sessions`. Vid utloggning markeras sessionen som
+spärrad i databasen och cookien tas bort. Om någon har kopierat en giltig
+sessionscookie kan den användas fram till utgångstiden eller tills sessionen
+spärras. En kopia slutar alltså också fungera efter utloggningen.
+
+En lösning där varje API enbart kontrollerar en signerad JWT passar när flera
+tjänster behöver verifiera samma token utan ett databasuppslag. Nackdelen är
+att en redan utfärdad token då kan fortsätta fungera fram till sin utgångstid.
+I Kursrum vill jag kunna avsluta åtkomsten direkt, särskilt för en
+administratör. Därför accepterar jag ett databasuppslag per autentiserat anrop.
+
+Om shoppens issue-token läcker behöver jag återkalla den hos GitHub och lägga
+in en ny i backendens miljövariabler. Att logga ut en administratör spärrar
+administratörens Kursrum-session, men issue-token tillhör shoppen och har en
+egen livscykel.
+
 ## Labb 8 – Orderbekräftelse via e-post
 
-När Stripe bekräftar betalningen sparar webhooken betalningen och slutför
-databastransaktionen. Därefter skickas orderbekräftelsen till fakturamottagarens
-e-postadress. Kunden får en svensk HTML- och textversion med ordernummer i
-ämnesraden samt kundnamn, produkter, antal, priser, frakt och totalsumma.
-Kundnamn och produkttitlar HTML-escapas i HTML-versionen.
+När Stripe bekräftar betalningen sparar webhooken betalningen och slutför databastransaktionen. Därefter skickas orderbekräftelsen till fakturamottagarens e-postadress. Kunden får en svensk HTML- och textversion med ordernummer i ämnesraden samt kundnamn, produkter, antal, priser, frakt och totalsumma. Kundnamn och produkttitlar HTML-escapas i HTML-versionen.
 
-Backend behöver miljövariablerna `RESEND_API_KEY` och `EMAIL_FROM`.
-Endast e-postadaptern använder Resends API-nyckel och URL. Anropet har fem
-sekunders timeout. Adaptern kontrollerar HTTP-status och validerar att
-Resend returnerar ett giltigt mejl-ID. Med testavsändaren
-`Kursrum <onboarding@resend.dev>` används Resend-kontots adress som mottagare.
+Backend behöver miljövariablerna `RESEND_API_KEY` och `EMAIL_FROM`. Endast e-postadaptern använder Resends API-nyckel och URL. Anropet har fem sekunders timeout. Adaptern kontrollerar HTTP-status och validerar att Resend returnerar ett giltigt mejl-ID. Med testavsändaren `Kursrum <onboarding@resend.dev>` används Resend-kontots adress som mottagare.
 
-Tabellen `order_confirmation_emails` har en rad per order. Utskicket
-reserveras med status `sending` innan mejlet byggs. Adaptern använder
-`order-confirmation/<orderId>` som Idempotency-Key. När Resend accepterar
-mejlet sparas `sent` och mejlets ID. Vid ett nekat utskick sparas `failed`
-och en felkod. Betalningen är redan sparad och webhooken kan svara 200.
-Poster med `failed` eller `sending` får inga automatiska återförsök.
+Tabellen `order_confirmation_emails` har en rad per order. Utskicket reserveras med status `sending` innan mejlet byggs. Adaptern använder `order-confirmation/<orderId>` som Idempotency-Key. När Resend accepterar mejlet sparas `sent` och mejlets ID. Vid ett nekat utskick sparas `failed` och en felkod. Betalningen är redan sparad och webhooken kan svara 200. Poster med `failed` eller `sending` får inga automatiska återförsök.
 
 ### Genomförda tester
 
-| Test | Resultat |
-|---|---|
-| Nytt testköp i den deployade shoppen | Order 33 betalades och orderbekräftelsen kom direkt till inkorgen. |
-| Samma Stripe-händelse skickades igen | Vercel svarade 200 vid båda leveranserna. Kunden fick ett enda mejl för order 33. |
-| Ogiltig Resend-nyckel lokalt | Stripe-händelsen spelades upp mot en obetald testorder i en separat lokal databas. Webhooken svarade 200, ordern blev `paid` och mejlposten fick `failed`. Samma felkod syntes i backendloggen och i `last_error_code`. |
+| **Test**                             | **Resultat**                                                                                                                                                                                                            |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nytt testköp i den deployade shoppen | Order 33 betalades och orderbekräftelsen kom direkt till inkorgen.                                                                                                                                                      |
+| Samma Stripe-händelse skickades igen | Vercel svarade 200 vid båda leveranserna. Kunden fick ett enda mejl för order 33.                                                                                                                                       |
+| Ogiltig Resend-nyckel lokalt         | Stripe-händelsen spelades upp mot en obetald testorder i en separat lokal databas. Webhooken svarade 200, ordern blev `paid` och mejlposten fick `failed`. Samma felkod syntes i backendloggen och i `last_error_code`. |
