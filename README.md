@@ -108,3 +108,46 @@ Min första prompt började: ”Hjälp mig steg för steg med Labb 5 i webbshopp
 Jag testade ombud och leveranstid i PostNords sandlåda för både ombud och hemleverans. Ett manipulerat ombudsval avvisades. Jag testade även fraktprisernas gränsvärden och kontrollerade att en bok för 99 kr plus hemleverans för 99 kr gav totalt 198 kr i databasen och Stripe Checkout.
 
 Dokumentation som användes vid kontrollen: [PostNord – Transit Time Calculation V1 and V2](https://atdeveloper.postnord.com/apis/details?systemName=transport-v2-transittime-calculation).
+
+### Labb 6 – Kundinloggning med Google
+
+Kunder kan logga in med Google via OAuth 2.0 och OpenID Connect. Backend hanterar kodutbytet och validerar Googles ID-token. Kunden identifieras med Googles `sub` och skapas vid första inloggningen. Konton slås inte ihop automatiskt utifrån e-postadress.
+
+Shoppen använder en serversession med en httpOnly-cookie för att hålla kunden inloggad. Det gör att sessionen kan avslutas vid utloggning och att Googles tokens stannar på servern. Befintlig lösenordsinloggning finns kvar.
+
+Inloggade kunder kan se sina egna beställningar under Mina sidor. Backend skyddar åtkomsten och kopplar beställningar till kunden. Avbruten eller misslyckad Google-inloggning visas med ett begripligt felmeddelande.
+
+### Labb 7 – GitHub-inloggning och felrapportering
+
+Admin kan logga in med GitHub. Åtkomsten begränsas till tillåtna GitHub-konton och backendens adminroutes är behörighetsskyddade.
+
+På adminsidan kan admin rapportera fel med rubrik och beskrivning samt se öppna issues med länkar till GitHub. Backend skapar issues med shoppens egen token och anger vilken admin som rapporterat. Token lagras endast på servern.
+
+## Labb 8 – Orderbekräftelse via e-post
+
+När Stripe bekräftar betalningen sparar webhooken betalningen och slutför
+databastransaktionen. Därefter skickas orderbekräftelsen till fakturamottagarens
+e-postadress. Kunden får en svensk HTML- och textversion med ordernummer i
+ämnesraden samt kundnamn, produkter, antal, priser, frakt och totalsumma.
+Kundnamn och produkttitlar HTML-escapas i HTML-versionen.
+
+Backend behöver miljövariablerna `RESEND_API_KEY` och `EMAIL_FROM`.
+Endast e-postadaptern använder Resends API-nyckel och URL. Anropet har fem
+sekunders timeout. Adaptern kontrollerar HTTP-status och validerar att
+Resend returnerar ett giltigt mejl-ID. Med testavsändaren
+`Kursrum <onboarding@resend.dev>` används Resend-kontots adress som mottagare.
+
+Tabellen `order_confirmation_emails` har en rad per order. Utskicket
+reserveras med status `sending` innan mejlet byggs. Adaptern använder
+`order-confirmation/<orderId>` som Idempotency-Key. När Resend accepterar
+mejlet sparas `sent` och mejlets ID. Vid ett nekat utskick sparas `failed`
+och en felkod. Betalningen är redan sparad och webhooken kan svara 200.
+Poster med `failed` eller `sending` får inga automatiska återförsök.
+
+### Genomförda tester
+
+| Test | Resultat |
+|---|---|
+| Nytt testköp i den deployade shoppen | Order 33 betalades och orderbekräftelsen kom direkt till inkorgen. |
+| Samma Stripe-händelse skickades igen | Vercel svarade 200 vid båda leveranserna. Kunden fick ett enda mejl för order 33. |
+| Ogiltig Resend-nyckel lokalt | Stripe-händelsen spelades upp mot en obetald testorder i en separat lokal databas. Webhooken svarade 200, ordern blev `paid` och mejlposten fick `failed`. Samma felkod syntes i backendloggen och i `last_error_code`. |
